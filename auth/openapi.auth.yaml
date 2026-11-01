@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: API de Cursos
+  version: 2.0.0
+  description: |
+    API de ejemplo de las Clases 10 y 11 (Arquitectura de Software 1 — UNAHUR).
+    Este archivo es el **contrato**: Swagger UI genera esta documentación a partir de él.
+
+    **Desde la Clase 11 la API está protegida.** Todas las operaciones piden un token de acceso
+    emitido por Keycloak (OIDC). Tocá **Authorize**, elegí los scopes y logueate:
+
+    | Usuario | Contraseña | Rol | Puede |
+    |---|---|---|---|
+    | `ana` | `ana123` | docente | ver, crear y borrar cursos |
+    | `beto` | `beto123` | alumno | solo ver cursos |
+
+    Sumar autenticación obligatoria a una API ya publicada rompe a los clientes que la usaban sin token:
+    por eso la versión mayor pasa de 1 a 2.
+servers:
+  - url: http://localhost:8000
+    description: Gateway (la API ya no publica su puerto; se entra por acá)
+security:
+  - keycloak: [openid]
+tags:
+  - name: Cursos
+paths:
+  /cursos:
+    get:
+      tags: [Cursos]
+      summary: Listar cursos
+      operationId: listarCursos
+      description: '**Rol requerido:** alumno o docente'
+      responses:
+        '200':
+          description: Lista de cursos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Curso'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+    post:
+      tags: [Cursos]
+      summary: Crear un curso
+      operationId: crearCurso
+      description: '**Rol requerido:** docente'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CursoNuevo'
+            example:
+              nombre: Ingeniería de Software
+              cupo: 30
+              docente: Equipo docente
+      responses:
+        '201':
+          description: Curso creado
+          headers:
+            Location:
+              description: URI del curso creado
+              schema:
+                type: string
+                example: /cursos/4
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Curso'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+  /cursos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags: [Cursos]
+      summary: Obtener un curso
+      operationId: obtenerCurso
+      description: '**Rol requerido:** alumno o docente'
+      responses:
+        '200':
+          description: El curso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Curso'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+    delete:
+      tags: [Cursos]
+      summary: Eliminar un curso
+      operationId: eliminarCurso
+      description: '**Rol requerido:** docente'
+      responses:
+        '204':
+          description: Eliminado (sin cuerpo)
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+components:
+  securitySchemes:
+    keycloak:
+      type: oauth2
+      description: |
+        OAuth 2.0 / OpenID Connect con Keycloak. Flujo Authorization Code con PKCE (cliente público "swagger-ui").
+        Documento de descubrimiento OIDC: http://localhost:8180/realms/cursos/.well-known/openid-configuration
+      flows:
+        authorizationCode:
+          authorizationUrl: http://localhost:8180/realms/cursos/protocol/openid-connect/auth
+          tokenUrl: http://localhost:8180/realms/cursos/protocol/openid-connect/token
+          scopes:
+            openid: Identidad del usuario (OIDC)
+            profile: Nombre y usuario
+  schemas:
+    CursoNuevo:
+      type: object
+      required: [nombre, cupo]
+      properties:
+        nombre:
+          type: string
+          example: Arquitectura de Software 1
+        cupo:
+          type: integer
+          minimum: 1
+          example: 40
+        docente:
+          type: string
+          nullable: true
+        descripcion:
+          type: string
+          nullable: true
+    Curso:
+      allOf:
+        - type: object
+          required: [id, creadoEn]
+          properties:
+            id:
+              type: integer
+              example: 1
+            creadoEn:
+              type: string
+              format: date-time
+        - $ref: '#/components/schemas/CursoNuevo'
+    ProblemDetails:
+      description: Formato de error estándar (RFC 9457, antes RFC 7807)
+      type: object
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          example: Curso no encontrado
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: No existe un curso con id 99.
+        instance:
+          type: string
+          example: /cursos/99
+  responses:
+    NoEncontrado:
+      description: El recurso no existe
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Invalido:
+      description: Datos de entrada inválidos
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    NoAutenticado:
+      description: Falta el token, está vencido o su firma no es válida (no sé quién sos)
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="cursos"
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: No autenticado
+            status: 401
+            detail: 'Falta el header "Authorization: Bearer <token>".'
+            instance: /cursos
+    SinPermiso:
+      description: El token es válido pero el rol no alcanza para esta operación (sé quién sos, pero no podés)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: Sin permiso
+            status: 403
+            detail: 'beto tiene los roles [alumno] y esta operación requiere uno de [docente].'
+            instance: /cursos
