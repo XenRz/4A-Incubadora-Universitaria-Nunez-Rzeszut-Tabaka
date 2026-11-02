@@ -91,7 +91,6 @@ paths:
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
-  /productos:
     post:
       tags: [Productos]
       summary: Crear un producto en la tienda del usuario
@@ -99,14 +98,24 @@ paths:
       description: |
         **Rol requerido:** duenio
 
-        La tienda **no** se manda en el cuerpo: se toma del atributo `tiendaId` del usuario,
-        que viaja en el access token. Así un dueño solo puede crear productos en su propia tienda.
+        El producto se crea en una tienda cuyo dueño es el usuario autenticado.
+        Si el usuario tiene una sola tienda, `tiendaId` puede omitirse.
+        Si tiene varias y no indica `tiendaId`, responde 400.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ProductoNuevo'
+              allOf:
+                - $ref: '#/components/schemas/ProductoNuevo'
+                - type: object
+                  properties:
+                    tiendaId:
+                      type: integer
+                      example: 1
+                      description: |
+                        Opcional. Si el usuario es dueño de una sola tienda, se usa esa.
+                        Si es dueño de varias, es obligatorio indicar en cuál se crea el producto.
             example:
               nombre: Mate de madera
               precio: 1500.50
@@ -129,7 +138,7 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
-          description: El usuario no tiene el rol duenio o no tiene una tienda asignada (atributo tiendaId)
+          description: El usuario no tiene el rol duenio, no es dueño de ninguna tienda o no es dueño de la tienda indicada
           content:
             application/problem+json:
               schema:
@@ -146,11 +155,11 @@ components:
       type: oauth2
       description: |
         OAuth 2.0 / OpenID Connect con Keycloak. Flujo Authorization Code con PKCE (cliente público "swagger-ui").
-        Documento de descubrimiento OIDC: http://localhost:8180/realms/cursos/.well-known/openid-configuration
+        Documento de descubrimiento OIDC: http://localhost:8180/realms/incubadora-universitaria/.well-known/openid-configuration
       flows:
         authorizationCode:
-          authorizationUrl: http://localhost:8180/realms/cursos/protocol/openid-connect/auth
-          tokenUrl: http://localhost:8180/realms/cursos/protocol/openid-connect/token
+          authorizationUrl: http://localhost:8180/realms/incubadora-universitaria/protocol/openid-connect/auth
+          tokenUrl: http://localhost:8180/realms/incubadora-universitaria/protocol/openid-connect/token
           scopes:
             openid: Identidad del usuario (OIDC)
             profile: Nombre y usuario
@@ -235,7 +244,7 @@ components:
         WWW-Authenticate:
           schema:
             type: string
-            example: Bearer realm="tiendas"
+            example: Bearer realm="incubadora-universitaria"
       content:
         application/problem+json:
           schema:

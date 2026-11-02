@@ -1,6 +1,6 @@
 {
-  "realm": "cursos",
-  "displayName": "Cursos · Arquitectura de Software 1",
+  "realm": "incubadora-universitaria",
+  "displayName": "Incubadora universitaria · Arquitectura de Software 1",
   "enabled": true,
   "sslRequired": "none",
   "internationalizationEnabled": true,
@@ -12,6 +12,9 @@
   "roles": {
     "realm": [
       { "name": "alumno",  "description": "Puede ver cursos" },
+      { "name": "comprador",  "description": "Puede ver catálogos de productos, detalle de un producto y hacer un pedido" },
+      { "name": "duenio",  "description": "Puede ver catálogos de productos, detalle de un producto, agregar un producto, editar y eliminar un producto de su tienda" },
+      { "name": "admin",  "description": "Puede ver catálogos de productos, detalle de un producto y ver estadísticas" },
       { "name": "docente", "description": "Puede ver, crear y borrar cursos" }
     ]
   },
@@ -24,7 +27,7 @@
       "emailVerified": true,
       "enabled": true,
       "credentials": [ { "type": "password", "value": "ana123", "temporary": false } ],
-      "realmRoles": [ "docente" ]
+      "realmRoles": [ "duenio" ]
     },
     {
       "username": "beto",
@@ -34,7 +37,7 @@
       "emailVerified": true,
       "enabled": true,
       "credentials": [ { "type": "password", "value": "beto123", "temporary": false } ],
-      "realmRoles": [ "alumno" ]
+      "realmRoles": [ "comprador" ]
     },
     {
       "username": "service-account-servicio-reportes",
