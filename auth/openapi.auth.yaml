@@ -1,83 +1,39 @@
 openapi: 3.0.3
 info:
-  title: API de Cursos
-  version: 2.0.0
+  title: Incubadora Universitaria 4A - Tiendas online para emprendedores
+  version: 1.0.0
   description: |
-    API de ejemplo de las Clases 10 y 11 (Arquitectura de Software 1 — UNAHUR).
-    Este archivo es el **contrato**: Swagger UI genera esta documentación a partir de él.
-
-    **Desde la Clase 11 la API está protegida.** Todas las operaciones piden un token de acceso
-    emitido por Keycloak (OIDC). Tocá **Authorize**, elegí los scopes y logueate:
-
-    | Usuario | Contraseña | Rol | Puede |
-    |---|---|---|---|
-    | `ana` | `ana123` | docente | ver, crear y borrar cursos |
-    | `beto` | `beto123` | alumno | solo ver cursos |
-
-    Sumar autenticación obligatoria a una API ya publicada rompe a los clientes que la usaban sin token:
-    por eso la versión mayor pasa de 1 a 2.
+    API de la incubadora universitaria 4A para tiendas online para emprendedores. 
+    Esta API permite gestionar tiendas y productos. 
 servers:
   - url: http://localhost:8000
     description: Gateway (la API ya no publica su puerto; se entra por acá)
 security:
   - keycloak: [openid]
 tags:
-  - name: Cursos
+  - name: Tiendas
+  - name: Productos
 paths:
-  /cursos:
+  /tiendas:
     get:
-      tags: [Cursos]
-      summary: Listar cursos
-      operationId: listarCursos
-      description: '**Rol requerido:** alumno o docente'
+      tags: [Tiendas]
+      summary: Listar tiendas
+      operationId: listarTiendas
+      description: '**Rol requerido:** Cualquier rol'
       responses:
         '200':
-          description: Lista de cursos
+          description: Lista de tiendas
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Curso'
+                  $ref: '#/components/schemas/Tiendas'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
-    post:
-      tags: [Cursos]
-      summary: Crear un curso
-      operationId: crearCurso
-      description: '**Rol requerido:** docente'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CursoNuevo'
-            example:
-              nombre: Ingeniería de Software
-              cupo: 30
-              docente: Equipo docente
-      responses:
-        '201':
-          description: Curso creado
-          headers:
-            Location:
-              description: URI del curso creado
-              schema:
-                type: string
-                example: /cursos/4
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Curso'
-        '400':
-          $ref: '#/components/responses/Invalido'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
-  /cursos/{id}:
+  /tiendas/{id}:
     parameters:
       - name: id
         in: path
@@ -86,17 +42,17 @@ paths:
           type: integer
           example: 1
     get:
-      tags: [Cursos]
-      summary: Obtener un curso
-      operationId: obtenerCurso
-      description: '**Rol requerido:** alumno o docente'
+      tags: [Tiendas]
+      summary: Obtener una tienda
+      operationId: obtenerTienda
+      description: '**Rol requerido:** Cualquier rol'
       responses:
         '200':
-          description: El curso
+          description: La tienda
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Curso'
+                $ref: '#/components/schemas/Tienda'
         '400':
           $ref: '#/components/responses/Invalido'
         '404':
@@ -105,14 +61,28 @@ paths:
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
-    delete:
-      tags: [Cursos]
-      summary: Eliminar un curso
-      operationId: eliminarCurso
-      description: '**Rol requerido:** docente'
+  /tiendas/{id}/productos:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags: [Productos]
+      summary: Listar productos de una tienda
+      operationId: listarProductos
+      description: '**Rol requerido:** Cualquier rol'
       responses:
-        '204':
-          description: Eliminado (sin cuerpo)
+        '200':
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Producto'
         '400':
           $ref: '#/components/responses/Invalido'
         '404':
@@ -120,7 +90,7 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
-          $ref: '#/components/responses/SinPermiso'
+          $ref: '#/components/responses/SinPermiso'  
 components:
   securitySchemes:
     keycloak:
@@ -136,35 +106,48 @@ components:
             openid: Identidad del usuario (OIDC)
             profile: Nombre y usuario
   schemas:
-    CursoNuevo:
+    Tienda:
       type: object
-      required: [nombre, cupo]
+      required: [id, nombre]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: Tienda de mates unahur
+    ProductoNuevo:
+      type: object
+      required: [nombre, precio, stock]
       properties:
         nombre:
           type: string
-          example: Arquitectura de Software 1
-        cupo:
+          example: Mate de madera
+          nullable: false
+        precio:
+          type: number
+          format: float
+          example: 1500.50
+          nullable: false
+        stock:
           type: integer
-          minimum: 1
-          example: 40
-        docente:
-          type: string
-          nullable: true
-        descripcion:
-          type: string
-          nullable: true
-    Curso:
+          example: 10
+          nullable: false
+    Producto:
       allOf:
+        - $ref: '#/components/schemas/ProductoNuevo'
         - type: object
-          required: [id, creadoEn]
+          required: [id, tiendaId,tiendaNombre]
           properties:
             id:
               type: integer
               example: 1
-            creadoEn:
+            tiendaId:
+              type: integer
+              example: 1
+            tiendaNombre:
               type: string
-              format: date-time
-        - $ref: '#/components/schemas/CursoNuevo'
+              example: Tienda de mates unahur
     ProblemDetails:
       description: Formato de error estándar (RFC 9457, antes RFC 7807)
       type: object
@@ -174,16 +157,16 @@ components:
           example: about:blank
         title:
           type: string
-          example: Curso no encontrado
+          example: Tienda no encontrada
         status:
           type: integer
           example: 404
         detail:
           type: string
-          example: No existe un curso con id 99.
+          example: No existe una tienda con id 99.
         instance:
           type: string
-          example: /cursos/99
+          example: /tiendas/99
   responses:
     NoEncontrado:
       description: El recurso no existe
@@ -203,7 +186,7 @@ components:
         WWW-Authenticate:
           schema:
             type: string
-            example: Bearer realm="cursos"
+            example: Bearer realm="tiendas"
       content:
         application/problem+json:
           schema:
@@ -213,7 +196,7 @@ components:
             title: No autenticado
             status: 401
             detail: 'Falta el header "Authorization: Bearer <token>".'
-            instance: /cursos
+            instance: /tiendas
     SinPermiso:
       description: El token es válido pero el rol no alcanza para esta operación (sé quién sos, pero no podés)
       content:
@@ -224,5 +207,5 @@ components:
             type: about:blank
             title: Sin permiso
             status: 403
-            detail: 'beto tiene los roles [alumno] y esta operación requiere uno de [docente].'
-            instance: /cursos
+            detail: 'comprador tiene los roles comprador y esta operación requiere uno de [duenio].'
+            instance: /productos
