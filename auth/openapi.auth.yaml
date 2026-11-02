@@ -90,7 +90,56 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
-          $ref: '#/components/responses/SinPermiso'  
+          $ref: '#/components/responses/SinPermiso'
+  /productos:
+    post:
+      tags: [Productos]
+      summary: Crear un producto en la tienda del usuario
+      operationId: crearProducto
+      description: |
+        **Rol requerido:** duenio
+
+        La tienda **no** se manda en el cuerpo: se toma del atributo `tiendaId` del usuario,
+        que viaja en el access token. Así un dueño solo puede crear productos en su propia tienda.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoNuevo'
+            example:
+              nombre: Mate de madera
+              precio: 1500.50
+              stock: 10
+      responses:
+        '201':
+          description: Producto creado en la tienda del usuario
+          headers:
+            Location:
+              description: URI del producto creado
+              schema:
+                type: string
+                example: /productos/1
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: El usuario no tiene el rol duenio o no tiene una tienda asignada (atributo tiendaId)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: about:blank
+                title: Sin permiso
+                status: 403
+                detail: 'comprador tiene los roles [comprador] y esta operación requiere uno de [duenio].'
+                instance: /productos
 components:
   securitySchemes:
     keycloak:
