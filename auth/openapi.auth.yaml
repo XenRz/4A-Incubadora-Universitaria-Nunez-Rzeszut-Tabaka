@@ -61,14 +61,7 @@ paths:
           $ref: '#/components/responses/NoAutenticado'
         '403':
           $ref: '#/components/responses/SinPermiso'
-  /tiendas/{id}/productos:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-          example: 1
+  /productos:
     get:
       tags: [Productos]
       summary: Listar productos de una tienda
@@ -114,8 +107,8 @@ paths:
                       type: integer
                       example: 1
                       description: |
-                        Opcional. Si el usuario es dueño de una sola tienda, se usa esa.
-                        Si es dueño de varias, es obligatorio indicar en cuál se crea el producto.
+                        Como el usuario es dueño de una sola tienda, se usa esa.
+                      required: true
             example:
               nombre: Mate de madera
               precio: 1500.50
