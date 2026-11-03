@@ -9,6 +9,7 @@ RUN npm ci --omit=dev
 
 # Después el código
 COPY src ./src
-
+# el user node sirve para que no se ejecute como root, por seguridad
+USER node 
 EXPOSE 3000
 CMD ["node", "src/index.js"]
