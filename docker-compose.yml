@@ -7,14 +7,14 @@ services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: cursos
-      POSTGRES_USER: cursos
-      POSTGRES_PASSWORD: cursos123        # en un proyecto real, esto va en un archivo .env que NO se sube al repo
+      POSTGRES_DB: tiendas
+      POSTGRES_USER: tiendas
+      POSTGRES_PASSWORD: tiendas123        # en un proyecto real, esto va en un archivo .env que NO se sube al repo
     volumes:
       - pgdata:/var/lib/postgresql/data   # volumen con nombre: los datos sobreviven a los contenedores
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro   # bind mount: script que corre la primera vez
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cursos -d cursos"]
+      test: ["CMD-SHELL", "pg_isready -U tiendas -d tiendas"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -28,9 +28,9 @@ services:
       PORT: 3000
       DB_HOST: db          # service discovery: el nombre del servicio ES el hostname
       DB_PORT: 5432
-      DB_NAME: cursos
-      DB_USER: cursos
-      DB_PASSWORD: cursos123
+      DB_NAME: tiendas
+      DB_USER: tiendas
+      DB_PASSWORD: tiendas123
     ports:
       - "3000:3000"        # puerto_host:puerto_contenedor
     depends_on:
