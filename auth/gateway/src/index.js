@@ -10,7 +10,7 @@ const API_URL = process.env.API_URL ?? 'http://localhost:3000';
 const JWKS_URL = process.env.JWKS_URL ?? 'http://localhost:8180/realms/incubadora-universitaria/protocol/openid-connect/certs';
 // ...pero el emisor (iss) del token es la URL que vio el NAVEGADOR al loguearse.
 const ISSUER = process.env.ISSUER ?? 'http://localhost:8180/realms/incubadora-universitaria';
-const AUDIENCE = process.env.AUDIENCE ?? 'api-cursos';
+const AUDIENCE = process.env.AUDIENCE ?? 'api-incubadora';
 const CORS_ORIGIN = process.env.CORS_ORIGIN ?? 'http://localhost:8080';
 
 // Se descarga la primera vez que se valida un token y queda en caché.
@@ -21,9 +21,11 @@ const jwks = createRemoteJWKSet(new URL(JWKS_URL));
 // Quién puede hacer qué. Está en UN solo lugar y se lee como una tabla.
 const REGLAS = [
   { metodo: 'GET',    ruta: /^\/health$/,         roles: null },                     // público
-  { metodo: 'GET',    ruta: /^\/cursos(\/[^/]+)?$/, roles: ['alumno', 'docente'] },
-  { metodo: 'POST',   ruta: /^\/cursos$/,         roles: ['docente'] },
-  { metodo: 'DELETE', ruta: /^\/cursos\/[^/]+$/,  roles: ['docente'] },
+  { metodo: 'GET',    ruta: /^\/tiendas(\/[^/]+)?$/, roles: null },
+  { metodo: 'POST',   ruta: /^\/tiendas$/,         roles: ['admin'] },
+  { metodo: 'DELETE', ruta: /^\/tiendas\/[^/]+$/,  roles: ['admin'] },
+  { metodo: 'GET', ruta: /^\/productos$/, roles: null },
+  { metodo: 'POST', ruta: /^\/productos$/, roles: ['duenio'] },
 ];
 
 const app = express();

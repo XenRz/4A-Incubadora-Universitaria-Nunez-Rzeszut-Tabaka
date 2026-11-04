@@ -63,11 +63,11 @@
       "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:8080/*" },
       "protocolMappers": [
         {
-          "name": "audiencia-api-cursos",
+          "name": "audiencia-api-incubadora",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "api-cursos",
+            "included.custom.audience": "api-incubadora",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }
@@ -89,11 +89,11 @@
       "serviceAccountsEnabled": true,
       "protocolMappers": [
         {
-          "name": "audiencia-api-cursos",
+          "name": "audiencia-api-incubadora",
           "protocol": "openid-connect",
           "protocolMapper": "oidc-audience-mapper",
           "config": {
-            "included.custom.audience": "api-cursos",
+            "included.custom.audience": "api-incubadora",
             "access.token.claim": "true",
             "id.token.claim": "false"
           }

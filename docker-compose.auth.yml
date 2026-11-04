@@ -38,7 +38,7 @@ services:
       API_URL: http://api:3000                                                     # por la red backend
       JWKS_URL: http://keycloak:8080/realms/incubadora-universitaria/protocol/openid-connect/certs   # por la red identidad
       ISSUER: http://localhost:8180/realms/incubadora-universitaria     # el "iss" que pone Keycloak cuando el navegador entra por localhost:8180
-      AUDIENCE: api-cursos
+      AUDIENCE: api-incubadora
       CORS_ORIGIN: http://localhost:8080
     ports:
       - "8000:8000"
