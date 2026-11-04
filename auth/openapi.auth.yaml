@@ -26,13 +26,11 @@ paths:
           content:
             application/json:
               schema:
-                type: array
+                type: array #array de tiendas
                 items:
-                  $ref: '#/components/schemas/Tiendas'
+                  $ref: '#/components/schemas/Tienda' # una tienda
         '401':
           $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
   /tiendas/{id}:
     parameters:
       - name: id
@@ -59,9 +57,14 @@ paths:
           $ref: '#/components/responses/NoEncontrado'
         '401':
           $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
-  /productos:
+  /tiendas/{id}/productos:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
     get:
       tags: [Productos]
       summary: Listar productos de una tienda
@@ -82,18 +85,15 @@ paths:
           $ref: '#/components/responses/NoEncontrado'
         '401':
           $ref: '#/components/responses/NoAutenticado'
-        '403':
-          $ref: '#/components/responses/SinPermiso'
+  /productos:
     post:
       tags: [Productos]
       summary: Crear un producto en la tienda del usuario
       operationId: crearProducto
       description: |
-        **Rol requerido:** duenio
+        **Rol requerido:** dueno
 
         El producto se crea en una tienda cuyo dueño es el usuario autenticado.
-        Si el usuario tiene una sola tienda, `tiendaId` puede omitirse.
-        Si tiene varias y no indica `tiendaId`, responde 400.
       requestBody:
         required: true
         content:
@@ -131,7 +131,7 @@ paths:
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
-          description: El usuario no tiene el rol duenio, no es dueño de ninguna tienda o no es dueño de la tienda indicada
+          description: El usuario no tiene el rol dueno o no tiene una tienda asignada (atributo tiendaId)
           content:
             application/problem+json:
               schema:
@@ -140,7 +140,7 @@ paths:
                 type: about:blank
                 title: Sin permiso
                 status: 403
-                detail: 'comprador tiene los roles [comprador] y esta operación requiere uno de [duenio].'
+                detail: 'comprador tiene los roles [comprador] y esta operación requiere uno de [dueno].'
                 instance: /productos
 components:
   securitySchemes:
@@ -173,15 +173,19 @@ components:
       properties:
         nombre:
           type: string
+          minLength: 1
           example: Mate de madera
           nullable: false
         precio:
           type: number
           format: float
+          minimum: 0
+          exclusiveMinimum: true # sirve para que el precio no pueda ser 0
           example: 1500.50
           nullable: false
         stock:
           type: integer
+          minimum: 0
           example: 10
           nullable: false
     Producto:
@@ -258,5 +262,5 @@ components:
             type: about:blank
             title: Sin permiso
             status: 403
-            detail: 'comprador tiene los roles comprador y esta operación requiere uno de [duenio].'
+            detail: 'comprador tiene los roles comprador y esta operación requiere uno de [dueno].'
             instance: /productos
