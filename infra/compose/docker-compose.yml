@@ -1,0 +1,108 @@
+# Levanta todo el sistema. Desde la raíz del repo:
+#
+#   docker compose -f infra/compose/docker-compose.yml up -d --build
+#
+# Las rutas relativas de este archivo se resuelven desde infra/compose/.
+
+name: incubadora   # sin esto, Docker usaría el nombre de la carpeta ("compose") como nombre del proyecto
+
+services:
+
+  # Base de datos. No publica puertos: solo la ven los servicios de la red "backend".
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tiendas
+      POSTGRES_USER: tiendas
+      POSTGRES_PASSWORD: tiendas123        # en un proyecto real, esto va en un archivo .env que NO se sube al repo
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # volumen con nombre: los datos sobreviven a los contenedores
+      # Scripts que corren SOLO la primera vez que se crea el volumen (ver infra/database/init/000_migraciones.sql).
+      # Se montan carpetas y no archivos sueltos: en Docker Desktop (Windows) un archivo suelto con ruta larga da "I/O error".
+      - ../database/init:/docker-entrypoint-initdb.d:ro
+      - ../../apps/backend/src/modules/tiendas/infrastructure/persistence/migrations:/migraciones/tiendas:ro
+      - ../../apps/backend/src/modules/catalogo/infrastructure/persistence/migrations:/migraciones/catalogo:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tiendas -d tiendas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - backend
+
+  # El monolito modular. No publica puertos: desde afuera solo se llega por el gateway.
+  backend:
+    build: ../../apps/backend
+    environment:
+      PORT: 3000
+      DB_HOST: db          # service discovery: el nombre del servicio ES el hostname
+      DB_PORT: 5432
+      DB_NAME: tiendas
+      DB_USER: tiendas
+      DB_PASSWORD: tiendas123
+    depends_on:
+      db:
+        condition: service_healthy   # espera a que Postgres responda, no solo a que arranque
+    networks:
+      - backend
+
+  # Proveedor de identidad OIDC. Modo desarrollo: sin HTTPS y con base interna (no usar así en producción).
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.5
+    command: ["start-dev", "--import-realm"]          # importa el realm la primera vez
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin              # usuario de la consola de administración
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin              # en un proyecto real: .env fuera del repo
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ../keycloak:/opt/keycloak/data/import:ro      # bind mount: el realm versionado en el repo
+    ports:
+      - "8180:8080"                                    # 8080 ya lo usa swagger-ui en el host
+    healthcheck:
+      # La imagen no trae curl: le pegamos al endpoint de salud (puerto 9000) con bash
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    networks:
+      - identidad
+
+  # Gateway: la ÚNICA puerta de entrada al backend. Valida el token y aplica las reglas por rol.
+  gateway:
+    build: ../gateway
+    environment:
+      PORT: 8000
+      API_URL: http://backend:3000                                                 # por la red backend
+      JWKS_URL: http://keycloak:8080/realms/incubadora-universitaria/protocol/openid-connect/certs   # por la red identidad
+      ISSUER: http://localhost:8180/realms/incubadora-universitaria     # el "iss" que pone Keycloak cuando el navegador entra por localhost:8180
+      AUDIENCE: api-incubadora
+      CORS_ORIGIN: http://localhost:8080
+    ports:
+      - "8000:8000"
+    depends_on:
+      - backend
+      - keycloak       # alcanza con que arranque: las claves se piden recién con el primer token
+    networks:
+      - backend
+      - identidad
+
+  # Documentación generada a partir del contrato OpenAPI; sabe loguearse contra Keycloak.
+  swagger-ui:
+    image: swaggerapi/swagger-ui:v5.17.14
+    environment:
+      SWAGGER_JSON: /spec/openapi.yaml
+      OAUTH_CLIENT_ID: swagger-ui
+      OAUTH_USE_PKCE: "true"
+      OAUTH_SCOPES: openid profile
+    volumes:
+      - ../../docs/architecture/openapi/openapi.yaml:/spec/openapi.yaml:ro   # editás el contrato y recargás, sin rebuild
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
+  identidad:

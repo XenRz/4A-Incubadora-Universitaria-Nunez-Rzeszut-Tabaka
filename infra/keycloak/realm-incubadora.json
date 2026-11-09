@@ -1,0 +1,102 @@
+{
+  "realm": "incubadora-universitaria",
+  "displayName": "Incubadora universitaria · Arquitectura de Software 1",
+  "enabled": true,
+  "sslRequired": "none",
+  "internationalizationEnabled": true,
+  "supportedLocales": [ "es", "en" ],
+  "defaultLocale": "es",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "accessTokenLifespan": 300,
+  "roles": {
+    "realm": [
+      { "name": "comprador",  "description": "Puede ver catálogos de productos, detalle de un producto y hacer un pedido" },
+      { "name": "dueno",  "description": "Puede ver catálogos de productos, detalle de un producto, agregar un producto, editar y eliminar un producto de su tienda" },
+      { "name": "admin",  "description": "Puede ver catálogos de productos, detalle de un producto y ver estadísticas" }
+    ]
+  },
+  "users": [
+    {
+      "username": "ana",
+      "firstName": "Ana",
+      "lastName": "Docente",
+      "email": "ana@cursos.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [ { "type": "password", "value": "ana123", "temporary": false } ],
+      "realmRoles": [ "dueno" ]
+    },
+    {
+      "username": "beto",
+      "firstName": "Beto",
+      "lastName": "Alumno",
+      "email": "beto@cursos.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [ { "type": "password", "value": "beto123", "temporary": false } ],
+      "realmRoles": [ "comprador" ]
+    },
+    {
+      "username": "service-account-servicio-reportes",
+      "enabled": true,
+      "serviceAccountClientId": "servicio-reportes",
+      "realmRoles": [ ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "swagger-ui",
+      "name": "Swagger UI (cliente público)",
+      "description": "Corre en el navegador: no puede guardar un secreto. Usa Authorization Code + PKCE.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [ "http://localhost:8080/oauth2-redirect.html" ],
+      "webOrigins": [ "http://localhost:8080" ],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:8080/*" },
+      "protocolMappers": [
+        {
+          "name": "audiencia-api-incubadora",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "api-incubadora",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "servicio-reportes",
+      "name": "Servicio de reportes (cliente confidencial, M2M)",
+      "description": "Un servicio que llama a la API sin usuario: se autentica con su propio client_secret (client_credentials).",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "reportes-secreto-solo-para-la-practica",
+      "protocol": "openid-connect",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audiencia-api-incubadora",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "api-incubadora",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    }
+  ]
+}

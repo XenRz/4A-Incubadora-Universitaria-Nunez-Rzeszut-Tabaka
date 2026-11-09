@@ -1,0 +1,12 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/main/index.js",
+  "scripts": { "start": "node src/main/index.js" },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.13.0"
+  }
+}
