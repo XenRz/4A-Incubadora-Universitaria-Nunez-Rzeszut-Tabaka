@@ -5,6 +5,7 @@
 /**
  * @typedef {Object} ConsultaTiendas
  * @property {(id: number) => Promise<{ id: number, nombre: string } | null>} buscarTienda  null si no existe
+ * @property {(tiendaId: number, usuarioId: string | null) => Promise<boolean>} esDuenoDeTienda
  */
 
 export {};

@@ -9,7 +9,7 @@ export function nuevoProducto({ tiendaId, nombre, precio, stock }) {
     && Number.isInteger(stock) && stock >= 0;
   if (!valido) {
     throw new DatosInvalidos('Datos inválidos',
-      'Se requiere "tiendaId" (entero), "nombre" (texto), "precio" (número mayor a 0) y "stock" (entero mayor o igual a 0).');
+      'Se requiere "nombre" (texto), "precio" (número mayor a 0) y "stock" (entero mayor o igual a 0).');
   }
   return { tiendaId, nombre: nombre.trim(), precio, stock };
 }

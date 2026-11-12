@@ -1,7 +1,8 @@
 -- Datos de ejemplo para desarrollo. Corre después de 000_migraciones.sql (orden alfabético).
-INSERT INTO tiendas (nombre) VALUES
-  ('Tienda de mates Unahur'),
-  ('Reposteria');
+-- dueno_id es el "id" del usuario en infra/keycloak/realm-incubadora.json
+INSERT INTO tiendas (nombre, dueno_id) VALUES
+  ('Tienda de mates Unahur', '11111111-1111-1111-1111-111111111111'),   -- ana
+  ('Reposteria',             '33333333-3333-3333-3333-333333333333');   -- carla
 
 INSERT INTO productos (tienda_id, nombre, precio, stock) VALUES
   -- Tienda de mates Unahur (id 1)

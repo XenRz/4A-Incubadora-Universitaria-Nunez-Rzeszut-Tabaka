@@ -1,5 +1,5 @@
 import express from 'express';
-import { NoEncontrado, DatosInvalidos } from '../shared/kernel/errors/errores.js';
+import { NoEncontrado, DatosInvalidos, SinPermiso } from '../shared/kernel/errors/errores.js';
 
 // Errores con Problem Details (RFC 9457)
 function problem(res, status, title, detail, instance) {
@@ -33,6 +33,7 @@ export function crearApp({ routers, verificarBase }) {
   app.use((err, req, res, next) => {
     if (err instanceof NoEncontrado) return problem(res, 404, err.titulo, err.message, req.originalUrl);
     if (err instanceof DatosInvalidos) return problem(res, 400, err.titulo, err.message, req.originalUrl);
+    if (err instanceof SinPermiso) return problem(res, 403, err.titulo, err.message, req.originalUrl);
     console.error(err);
     problem(res, 500, 'Error interno', 'Ocurrió un error inesperado.', req.originalUrl);
   });

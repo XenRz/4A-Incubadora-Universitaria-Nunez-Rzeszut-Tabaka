@@ -1,4 +1,4 @@
-import { DatosInvalidos } from '../../../../shared/kernel/errors/errores.js';
+import { NoEncontrado, SinPermiso } from '../../../../shared/kernel/errors/errores.js';
 import { nuevoProducto } from '../../domain/producto.js';
 
 /**
@@ -8,11 +8,17 @@ import { nuevoProducto } from '../../domain/producto.js';
  * }} deps
  */
 export function crearProducto({ productoRepository, consultaTiendas }) {
-  return async function (datos) {
-    const producto = nuevoProducto(datos);
+  // tiendaId viene de la URL, usuarioId del token (lo reenvía el gateway) y los datos del cuerpo del pedido.
+  return async function (tiendaId, usuarioId, datos) {
+    const tienda = await consultaTiendas.buscarTienda(tiendaId);
+    if (!tienda) throw new NoEncontrado('Tienda no encontrada', `No existe una tienda con id ${tiendaId}.`);
 
-    const tienda = await consultaTiendas.buscarTienda(producto.tiendaId);
-    if (!tienda) throw new DatosInvalidos('Datos inválidos', `No existe una tienda con id ${producto.tiendaId}.`);
+    // Invariante: un dueño no puede crear productos en la tienda de otro dueño.
+    if (!(await consultaTiendas.esDuenoDeTienda(tiendaId, usuarioId))) {
+      throw new SinPermiso('Sin permiso', `No sos el dueño de la tienda ${tiendaId}.`);
+    }
+
+    const producto = nuevoProducto({ tiendaId, nombre: datos.nombre, precio: datos.precio, stock: datos.stock });
 
     const id = await productoRepository.guardar(producto);
     return {

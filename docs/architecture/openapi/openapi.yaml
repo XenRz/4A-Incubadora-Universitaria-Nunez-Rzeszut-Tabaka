@@ -85,63 +85,68 @@ paths:
           $ref: '#/components/responses/NoEncontrado'
         '401':
           $ref: '#/components/responses/NoAutenticado'
-  /productos:
     post:
       tags: [Productos]
-      summary: Crear un producto en la tienda del usuario
+      summary: Crear un producto en una tienda
       operationId: crearProducto
       description: |
         **Rol requerido:** dueno
 
-        El producto se crea en una tienda cuyo dueño es el usuario autenticado.
+        El producto se crea en la tienda indicada en la URL. Solo puede hacerlo el dueño de esa tienda.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              allOf:
-                - $ref: '#/components/schemas/ProductoNuevo'
-                - type: object
-                  properties:
-                    tiendaId:
-                      type: integer
-                      example: 1
-                      description: |
-                        Como el usuario es dueño de una sola tienda, se usa esa.
-                      required: true
+              $ref: '#/components/schemas/ProductoNuevo'
             example:
               nombre: Mate de madera
               precio: 1500.50
               stock: 10
       responses:
         '201':
-          description: Producto creado en la tienda del usuario
+          description: Producto creado en la tienda
           headers:
             Location:
               description: URI del producto creado
               schema:
                 type: string
-                example: /productos/1
+                example: /tiendas/1/productos/13
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Producto'
         '400':
           $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '403':
-          description: El usuario no tiene el rol dueno o no tiene una tienda asignada (atributo tiendaId)
+          description: |
+            El usuario no tiene el rol dueno (lo rechaza el gateway)
+            o no es el dueño de la tienda de la URL (lo rechaza el backend).
           content:
             application/problem+json:
               schema:
                 $ref: '#/components/schemas/ProblemDetails'
-              example:
-                type: about:blank
-                title: Sin permiso
-                status: 403
-                detail: 'comprador tiene los roles [comprador] y esta operación requiere uno de [dueno].'
-                instance: /productos
+              examples:
+                sinRol:
+                  summary: No tiene el rol dueno
+                  value:
+                    type: about:blank
+                    title: Sin permiso
+                    status: 403
+                    detail: 'comprador tiene los roles [comprador] y esta operación requiere uno de [dueno].'
+                    instance: /tiendas/1/productos
+                tiendaAjena:
+                  summary: Es dueño, pero de otra tienda
+                  value:
+                    type: about:blank
+                    title: Sin permiso
+                    status: 403
+                    detail: No sos el dueño de la tienda 2.
+                    instance: /tiendas/2/productos
 components:
   securitySchemes:
     keycloak:
@@ -263,4 +268,4 @@ components:
             title: Sin permiso
             status: 403
             detail: 'comprador tiene los roles comprador y esta operación requiere uno de [dueno].'
-            instance: /productos
+            instance: /tiendas/1/productos

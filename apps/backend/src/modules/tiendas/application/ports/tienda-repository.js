@@ -3,7 +3,7 @@
 // (JavaScript no tiene interfaces: el contrato queda documentado acá.)
 
 /**
- * @typedef {{ id: number, nombre: string }} Tienda
+ * @typedef {{ id: number, nombre: string, duenoId: string | null }} Tienda
  *
  * @typedef {Object} TiendaRepository
  * @property {() => Promise<Tienda[]>} listar

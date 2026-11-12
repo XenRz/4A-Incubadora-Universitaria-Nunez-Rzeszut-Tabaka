@@ -18,6 +18,7 @@
   },
   "users": [
     {
+      "id": "11111111-1111-1111-1111-111111111111",
       "username": "ana",
       "firstName": "Ana",
       "lastName": "Docente",
@@ -28,6 +29,18 @@
       "realmRoles": [ "dueno" ]
     },
     {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "username": "carla",
+      "firstName": "Carla",
+      "lastName": "Duena",
+      "email": "carla@incubadora.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [ { "type": "password", "value": "carla123", "temporary": false } ],
+      "realmRoles": [ "dueno" ]
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
       "username": "beto",
       "firstName": "Beto",
       "lastName": "Alumno",

@@ -26,7 +26,7 @@ const REGLAS = [
   { metodo: 'POST',   ruta: /^\/tiendas$/,         roles: ['admin'] },
   { metodo: 'DELETE', ruta: /^\/tiendas\/[^/]+$/,  roles: ['admin'] },
   { metodo: 'GET', ruta: /^\/productos$/, roles: null },
-  { metodo: 'POST', ruta: /^\/productos$/, roles: ['dueno'] },
+  { metodo: 'POST',   ruta: /^\/tiendas\/[^/]+\/productos$/, roles: ['dueno'] },
 ];
 
 const app = express();
@@ -84,6 +84,10 @@ app.use(async (req, res) => {
   const regla = REGLAS.find((r) => r.metodo === req.method && r.ruta.test(req.path));
   if (!regla) return problem(res, 404, 'No encontrado', `No hay ruta ${req.method} ${req.path} en el gateway.`, req.originalUrl);
 
+  // Headers que se reenvían al backend. Se arman desde cero: nada de lo que mande el cliente pasa directo,
+  // así nadie puede inventarse un X-Usuario-Id desde afuera.
+  const headers = { 'Content-Type': 'application/json' };
+
   if (regla.roles) {
     const { usuario, error } = await autenticar(req);
     // 401: no sé quién sos
@@ -95,12 +99,14 @@ app.use(async (req, res) => {
         `${usuario.preferred_username ?? usuario.azp} tiene los roles [${roles.join(', ')}] y esta operación requiere uno de [${regla.roles.join(', ')}].`,
         req.originalUrl);
     }
+    // El backend decide las reglas de negocio (ej: ¿sos dueño de ESTA tienda?) con el id del token ya validado.
+    headers['X-Usuario-Id'] = usuario.sub;
   }
 
   try {
     const resp = await fetch(API_URL + req.originalUrl, {
       method: req.method,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? JSON.stringify(req.body ?? {}) : undefined,
     });
     // Solo copiamos los headers que importan (el CORS lo maneja el gateway, no la API)
