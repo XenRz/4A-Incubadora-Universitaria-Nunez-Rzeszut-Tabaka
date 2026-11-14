@@ -5,7 +5,7 @@ import { DatosInvalidos } from '../../../shared/kernel/errors/errores.js';
 export function nuevoProducto({ tiendaId, nombre, precio, stock }) {
   const valido = Number.isInteger(tiendaId)
     && typeof nombre === 'string' && nombre.trim() !== ''
-    && typeof precio === 'number' && precio > 0
+    && typeof precio === 'number' && Number.isFinite(precio) && precio > 0
     && Number.isInteger(stock) && stock >= 0;
   if (!valido) {
     throw new DatosInvalidos('Datos inválidos',

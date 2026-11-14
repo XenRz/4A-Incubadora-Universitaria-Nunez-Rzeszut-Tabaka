@@ -34,6 +34,8 @@ export function crearApp({ routers, verificarBase }) {
     if (err instanceof NoEncontrado) return problem(res, 404, err.titulo, err.message, req.originalUrl);
     if (err instanceof DatosInvalidos) return problem(res, 400, err.titulo, err.message, req.originalUrl);
     if (err instanceof SinPermiso) return problem(res, 403, err.titulo, err.message, req.originalUrl);
+    // JSON mal formado en el cuerpo: es culpa del cliente (400), no un error interno.
+    if (err.type === 'entity.parse.failed') return problem(res, 400, 'JSON inválido', 'El cuerpo del pedido no es JSON válido.', req.originalUrl);
     console.error(err);
     problem(res, 500, 'Error interno', 'Ocurrió un error inesperado.', req.originalUrl);
   });

@@ -46,6 +46,27 @@ services:
     networks:
       - backend
 
+  # Tests del backend contra la base real (aislamiento entre tiendas).
+  # No arranca con "up": solo existe con el perfil "test". Desde la raíz del repo:
+  #   docker compose -f infra/compose/docker-compose.yml --profile test run --rm --build backend-tests
+  # Crea sus propias tiendas y las borra al terminar; no toca los datos de ejemplo.
+  backend-tests:
+    profiles: ["test"]
+    build:
+      context: ../../apps/backend
+      target: test        # etapa "test" del Dockerfile: la imagen del backend + tests/
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: tiendas
+      DB_USER: tiendas
+      DB_PASSWORD: tiendas123
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
   # Proveedor de identidad OIDC. Modo desarrollo: sin HTTPS y con base interna (no usar así en producción).
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5

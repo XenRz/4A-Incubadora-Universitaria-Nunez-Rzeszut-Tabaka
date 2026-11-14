@@ -21,3 +21,4 @@ export class SinPermiso extends Error {
     this.titulo = titulo;
   }
 }
+

@@ -46,4 +46,29 @@ docker compose -f infra/compose/docker-compose.yml up -d --build
 | http://localhost:8080 | Swagger UI (contrato en `docs/architecture/openapi/openapi.yaml`) |
 | http://localhost:8180 | Keycloak (consola de administración: admin / admin) |
 
+### Usuarios de prueba
+
+Los importa Keycloak desde `infra/keycloak/realm-incubadora.json` (las contraseñas están en ese archivo; son de desarrollo). Las tiendas y sus productos de ejemplo los carga `infra/database/init/datos-ejemplo.sql`.
+
+| Usuario | Rol | Tienda | Para probar |
+|---|---|---|---|
+| ana | dueno | Tienda de mates Unahur (id 1) | Carga de producto en su tienda |
+| carla | dueno | Repostería (id 2) | Que no puede cargar productos en la tienda de ana |
+| beto | comprador | — | Catálogo de cualquier tienda; 403 si intenta crear un producto |
+
+Falta un usuario con rol `admin`.
+
+## Tests
+
+```bash
+# Backend: unitarios, HTTP, arquitectura (el de Postgres se saltea sin base)
+cd apps/backend && npm ci && npm test
+
+# Gateway: 401 y 403 con tokens firmados por el propio test
+cd infra/gateway && npm ci && npm test
+
+# Backend contra la base real, desde la raíz del repo
+docker compose -f infra/compose/docker-compose.yml --profile test run --rm --build backend-tests
+```
+
 El esquema de la base lo crean las migraciones de cada módulo (`modules/*/infrastructure/persistence/migrations`) y los datos de ejemplo están en `infra/database/init`. Corren solo la primera vez: para empezar de cero, `docker compose -f infra/compose/docker-compose.yml down -v`.

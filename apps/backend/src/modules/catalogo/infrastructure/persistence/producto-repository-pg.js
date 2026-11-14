@@ -7,6 +7,7 @@ const aProducto = (r) => ({ id: r.id, tiendaId: r.tienda_id, nombre: r.nombre, p
 export function crearProductoRepositoryPg(pool) {
   return {
     async listarPorTienda(tiendaId) {
+      // El filtro por tienda_id es obligatorio: no existe "listar todos".
       const { rows } = await pool.query(
         'SELECT id, tienda_id, nombre, precio, stock FROM productos WHERE tienda_id = $1 ORDER BY id',
         [tiendaId],
