@@ -39,7 +39,26 @@ export function crearGateway({ apiUrl, jwks, issuer, audience, corsOrigin }) {
   app.use(express.json());
 
   // CORS: Swagger UI (localhost:8080) llama al gateway (localhost:8000) y manda el header Authorization
-  app.use((req, res, next) => {
+
+const origenes = corsOrigin.split(',').map((o) => o.trim()); // guarda en una lista los orígenes permitidos, habiendo varios
+
+app.use((req, res, next) => {
+  const origin = req.get('Origin'); // esta constante contiene el origen de la solicitud entrante
+  if (origenes.includes(origin)) { // si el origen de la solicitud entrante esta en la lista de orígenes permitidos
+    res.set('Access-Control-Allow-Origin', origin); // permite el origen de la solicitud entrante
+    res.set('Vary', 'Origin'); // indica que la respuesta puede variar según el origen de la solicitud entrante
+  }
+
+  res.set('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.set('Access-Control-Expose-Headers', 'Location, WWW-Authenticate');
+  if (req.method === 'OPTIONS') return res.sendStatus(204); // este if es para que cuando el navegador haga la solicitud options, el servidor responda con un 204 y no siga ejecutando
+  next();
+});
+
+
+
+/*   app.use((req, res, next) => {
     res.set('Access-Control-Allow-Origin', corsOrigin);
     res.set('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
     res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -47,7 +66,7 @@ export function crearGateway({ apiUrl, jwks, issuer, audience, corsOrigin }) {
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     next();
   });
-
+ */
   // ---------- Autenticación: ¿quién sos? ----------
   async function autenticar(req) {
     const auth = req.get('Authorization') ?? '';

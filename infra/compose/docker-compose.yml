@@ -98,7 +98,7 @@ services:
       JWKS_URL: http://keycloak:8080/realms/incubadora-universitaria/protocol/openid-connect/certs   # por la red identidad
       ISSUER: http://localhost:8180/realms/incubadora-universitaria     # el "iss" que pone Keycloak cuando el navegador entra por localhost:8180
       AUDIENCE: api-incubadora
-      CORS_ORIGIN: http://localhost:8080
+      CORS_ORIGIN: http://localhost:8080, http://localhost:3000
     ports:
       - "8000:8000"
     depends_on:
@@ -107,6 +107,10 @@ services:
     networks:
       - backend
       - identidad
+  web:
+    build: ../../apps/frontend
+    ports:
+      - "3000:80"
 
   # Documentación generada a partir del contrato OpenAPI; sabe loguearse contra Keycloak.
   swagger-ui:
@@ -127,3 +131,4 @@ volumes:
 networks:
   backend:
   identidad:
+  frontend:

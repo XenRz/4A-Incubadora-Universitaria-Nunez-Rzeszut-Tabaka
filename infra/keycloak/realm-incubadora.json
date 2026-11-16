@@ -51,6 +51,17 @@
       "realmRoles": [ "comprador" ]
     },
     {
+      "id": "44444444-4444-4444-4444-444444444444",
+      "username": "admin",
+      "firstName": "Admin",
+      "lastName": "Administrador",
+      "email": "admin@incubadora.local",
+      "emailVerified": true,
+      "enabled": true,
+      "credentials": [ { "type": "password", "value": "admin123", "temporary": false } ],
+      "realmRoles": [ "admin" ]
+    },
+    {
       "username": "service-account-servicio-reportes",
       "enabled": true,
       "serviceAccountClientId": "servicio-reportes",
@@ -71,7 +82,7 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [ "http://localhost:8080/oauth2-redirect.html" ],
       "webOrigins": [ "http://localhost:8080" ],
-      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:8080/*" },
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:8080/" },
       "protocolMappers": [
         {
           "name": "audiencia-api-incubadora",
@@ -98,6 +109,33 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audiencia-api-incubadora",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "api-incubadora",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "web-incubadora",
+      "name": "Web de la incubadora",
+      "description": "La web de la incubadora universitaria, que corre en el navegador y llama a la API.",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect", 
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [ "http://localhost:3000/" ],
+      "webOrigins": [ "http://localhost:3000" ],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:3000/" },
       "protocolMappers": [
         {
           "name": "audiencia-api-incubadora",
