@@ -131,4 +131,3 @@ volumes:
 networks:
   backend:
   identidad:
-  frontend:
