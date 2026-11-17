@@ -7,8 +7,8 @@ export function logout() {
     
     const params = new URLSearchParams({
         client_id: CLIENT_ID,
-        redirect_uri: REDIRECT_URI
+        post_logout_redirect_uri: REDIRECT_URI
     });
-    window.location.href = `${KEYCLOAK}/protocol/openid-connect/logout?${params.toString()}`; // el window.location.href redirige al usuario a la URL de cierre de sesión de Keycloak
+    window.location.href = `${KEYCLOAK}/protocol/openid-connect/logout?${params}`; // el window.location.href redirige al usuario a la URL de cierre de sesión de Keycloak
 }
     
