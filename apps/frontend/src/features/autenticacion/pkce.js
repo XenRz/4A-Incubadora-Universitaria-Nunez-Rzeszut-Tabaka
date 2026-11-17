@@ -5,7 +5,7 @@ function base64URLEncode(bytes) { /* esta funcion permite codificar un array de 
         .replace(/=/g, '');
 }
 
-export function generarCodeVerifier() { /* esta funcion genera un code verifier aleatorio de 128 bytes y lo codifica en base64url */
+export function generarCodeVerifier() { /* esta funcion genera un code verifier aleatorio de 32 bytes y lo codifica en base64url */
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
     return base64URLEncode(array);
