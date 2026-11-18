@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../../shared/api-client/api.js';
-import { esDueno } from '../shared/token.js';
+import { esDueno } from '../../shared/utils/token.js';
 import { login } from '../autenticacion/login.js';
 
 const FORM_INICIAL = { nombre: '', precio: '', stock: '' };

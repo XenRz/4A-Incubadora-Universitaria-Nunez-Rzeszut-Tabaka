@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../../shared/api-client/api.js'
 import CargaProducto from './CargaProducto.jsx'
-import { esDueno } from '../shared/token.js';
+import { esDueno } from '../../shared/utils/token.js';
 const formatoPrecio = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
 function VistaTienda() {

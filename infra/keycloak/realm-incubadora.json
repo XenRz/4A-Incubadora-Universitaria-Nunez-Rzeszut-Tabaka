@@ -21,8 +21,8 @@
       "id": "11111111-1111-1111-1111-111111111111",
       "username": "ana",
       "firstName": "Ana",
-      "lastName": "Docente",
-      "email": "ana@cursos.local",
+      "lastName": "Duenio",
+      "email": "ana@Duenia",
       "emailVerified": true,
       "enabled": true,
       "credentials": [ { "type": "password", "value": "ana123", "temporary": false } ],
@@ -33,7 +33,7 @@
       "username": "carla",
       "firstName": "Carla",
       "lastName": "Duena",
-      "email": "carla@incubadora.local",
+      "email": "carla@incubadora.com.ar",
       "emailVerified": true,
       "enabled": true,
       "credentials": [ { "type": "password", "value": "carla123", "temporary": false } ],
@@ -43,8 +43,8 @@
       "id": "22222222-2222-2222-2222-222222222222",
       "username": "beto",
       "firstName": "Beto",
-      "lastName": "Alumno",
-      "email": "beto@cursos.local",
+      "lastName": "Comprador",
+      "email": "beto@incubadora.com.ar",
       "emailVerified": true,
       "enabled": true,
       "credentials": [ { "type": "password", "value": "beto123", "temporary": false } ],
@@ -60,12 +60,6 @@
       "enabled": true,
       "credentials": [ { "type": "password", "value": "admin123", "temporary": false } ],
       "realmRoles": [ "admin" ]
-    },
-    {
-      "username": "service-account-servicio-reportes",
-      "enabled": true,
-      "serviceAccountClientId": "servicio-reportes",
-      "realmRoles": [ ]
     }
   ],
   "clients": [
@@ -83,32 +77,6 @@
       "redirectUris": [ "http://localhost:8080/oauth2-redirect.html" ],
       "webOrigins": [ "http://localhost:8080" ],
       "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "http://localhost:8080/" },
-      "protocolMappers": [
-        {
-          "name": "audiencia-api-incubadora",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "config": {
-            "included.custom.audience": "api-incubadora",
-            "access.token.claim": "true",
-            "id.token.claim": "false"
-          }
-        }
-      ]
-    },
-    {
-      "clientId": "servicio-reportes",
-      "name": "Servicio de reportes (cliente confidencial, M2M)",
-      "description": "Un servicio que llama a la API sin usuario: se autentica con su propio client_secret (client_credentials).",
-      "enabled": true,
-      "publicClient": false,
-      "clientAuthenticatorType": "client-secret",
-      "secret": "reportes-secreto-solo-para-la-practica",
-      "protocol": "openid-connect",
-      "standardFlowEnabled": false,
-      "implicitFlowEnabled": false,
-      "directAccessGrantsEnabled": false,
-      "serviceAccountsEnabled": true,
       "protocolMappers": [
         {
           "name": "audiencia-api-incubadora",
