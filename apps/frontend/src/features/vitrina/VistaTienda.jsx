@@ -1,22 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../../shared/api-client/api.js'
-
+import CargaProducto from './CargaProducto.jsx'
+import { esDueno } from '../shared/token.js';
 const formatoPrecio = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
 function VistaTienda() {
   const { id } = useParams()
   const [resultado, setResultado] = useState({ id: null, productos: [], error: null })
-
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [version, setVersion] = useState(0) // al incrementarlo se vuelven a pedir los datos
   useEffect(() => {
     let cancelado = false
 
-    api.get(`/tiendas/${id}/productos`)
-      .then((datos) => { if (!cancelado) setResultado({ id, productos: datos, error: null }) })
-      .catch((e) => { if (!cancelado) setResultado({ id, productos: [], error: e }) })
+  Promise.all([
+      api.get(`/tiendas/${id}`),
+      api.get(`/tiendas/${id}/productos`),
+    ])
+      .then(([tienda, productos]) => { if (!cancelado) setResultado({ id, tienda, productos, error: null }) })
+      .catch((e) => { if (!cancelado) setResultado({ id, tienda: null, productos: [], error: e }) })
 
     return () => { cancelado = true }
-  }, [id])
+  }, [id, version])
 
   const cargando = resultado.id !== id
   const { productos, error } = resultado
@@ -31,13 +36,31 @@ function VistaTienda() {
       </section>
     )
   }
-
+  const puedeAgregar = esDueno()
   const nombreTienda = productos[0]?.tiendaNombre ?? `Tienda ${id}`
 
   return (
     <section>
       <Link to="/">← Volver a las tiendas</Link>
       <h2>{nombreTienda}</h2>
+      {puedeAgregar && (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+            <button onClick={() => setMostrarForm((v) => !v)}>
+              {mostrarForm ? 'Cancelar' : 'Agregar producto'}
+            </button>
+          </div>
+
+          {mostrarForm && (
+            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+              <CargaProducto
+                tiendaId={id}
+                onCreado={() => setVersion((v) => v + 1)}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {productos.length === 0
         ? <p>Esta tienda todavía no tiene productos.</p>
