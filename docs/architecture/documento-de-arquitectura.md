@@ -45,33 +45,34 @@ Quedan diseñados pero no implementados: el checkout con la pasarela y las estad
 
 ## 3. Requerimientos no funcionales
 
-Mantenibilidad y costo mandan sobre todo lo demás: cuando un atributo compite con ellos, gana la simplicidad. Las métricas son propuestas de partida, ajustables con el equipo.
+Mantenibilidad y costo mandan sobre todo lo demás: cuando un atributo compite con ellos, gana la simplicidad. Cada NFR priorizado está escrito como escenario de calidad con el formato de la cátedra: cuando \[fuente\] hace \[estímulo\] sobre \[artefacto\] en \[entorno\], el sistema \[respuesta\], medido como \[medida\]. La columna de verificación dice dónde está la evidencia (sección 13).
 
-| ID | Atributo | Prioridad | Escenario y métrica objetivo | Cómo se verifica |
+| ID | Atributo | Prioridad | Escenario | Verificación |
 | --- | --- | --- | --- | --- |
-| NFR-1 | Mantenibilidad (comprensibilidad) | Estrella | Un becario nuevo entiende el sistema completo en 1 semana: pocas unidades de despliegue, estructura de código predecible, README de arranque y C4 actualizados | Prueba de onboarding: un becario nuevo levanta el sistema local y agrega un campo a un producto en menos de 5 días hábiles |
-| NFR-2 | Costo | Estrella | Opera en un solo servidor de la universidad, sin servicios pagos de nube, sin licencias y con pocas dependencias | Inventario de dependencias y servicios: costo mensual adicional igual a cero |
-| NFR-3 | Seguridad y aislamiento entre tiendas | Alta | Un dueño nunca lee ni modifica datos de otra tienda; toda consulta se filtra por la tienda del usuario autenticado | Tests automatizados de acceso cruzado entre dos tiendas (el caso mínimo) en cada cambio |
-| NFR-4 | Seguridad general | Alta | Credenciales gestionadas por Keycloak, access token firmado con vencimiento de 5 minutos, firma, emisor y audiencia validados en el gateway, HTTPS, validación de entrada, control de acceso por rol | Revisión contra OWASP Top 10, tests de autorización por rol (401 y 403) y prueba de token adulterado rechazado |
-| NFR-5 | Operabilidad | Media | Un becario puede desplegar, hacer backup y restaurar con instrucciones escritas; logs legibles para diagnosticar fallas | Simulacro de restauración desde backup siguiendo solo la documentación |
-| NFR-6 | Rendimiento | Media | Con tráfico bajo y parejo, las páginas de catálogo responden en menos de 1 segundo | Prueba de carga simple con datos de 30 tiendas y 50 productos cada una |
-| NFR-7 | Disponibilidad | Baja | Una caída breve (horas) es tolerable; sin alta disponibilidad ni failover; backup diario | Política de backup documentada y probada |
-| NFR-8 | Escalabilidad | Baja | No se diseña para crecer más allá de la escala del escenario; si creciera, se rediseña | Decisión explícita registrada en los ADRs |
+| NFR-1 | Mantenibilidad (comprensibilidad) | Estrella | Cuando un becario nuevo, sin conocimiento previo del sistema, hace el alta de un campo nuevo en Producto sobre el módulo catálogo, el front y la documentación (README, C4 y ADRs) en desarrollo, durante su primera semana con el equipo renovado, el sistema queda levantado en local con el campo funcionando y los tests en verde, medido como menos de 5 días hábiles desde que clona el repositorio. | Prueba de onboarding y test de arquitectura |
+| NFR-2 | Costo | Estrella | Cuando los becarios hacen el despliegue y la operación de un mes sobre todo el sistema en producción, en el servidor de la universidad, el sistema funciona solo con software libre y sin servicios pagos de nube, medido como costo mensual adicional igual a cero y ninguna licencia paga. | Inventario de dependencias y licencias en el README |
+| NFR-3 | Seguridad y aislamiento entre tiendas | Alta | Cuando la dueña autenticada de una tienda hace el alta de un producto en una tienda ajena sobre el gateway y el módulo catálogo en operación normal, el sistema rechaza el pedido con 403 en formato Problem Details sin guardar nada, y el catálogo de cada tienda sigue mostrando solo sus productos, medido como 0 escrituras cruzadas en la suite de acceso cruzado, en memoria y contra PostgreSQL. | Tests de acceso cruzado del backend |
+| NFR-4 | Seguridad general | Alta | Cuando un cliente o un atacante hace una petición a una ruta protegida sin token, con un token adulterado, vencido o emitido para otra audiencia, o con un rol insuficiente, sobre el gateway en operación normal, el sistema la rechaza en el gateway antes de que llegue a la API, con 401 y `WWW-Authenticate` o con 403, medido como el 100% de los casos de la suite del gateway rechazados. | Tests de autorización del gateway |
+| NFR-5 | Operabilidad | Media | Cuando un becario hace la restauración de la base desde un backup, siguiendo solo el README, sobre la base de datos y el compose en un servidor que perdió sus datos, el sistema vuelve a funcionar con los datos del backup y logs legibles con `docker compose logs`, medido como menos de 3 horas y sin ayuda externa. | Simulacro de restauración; hoy, argumento |
+| NFR-6 | Rendimiento | Media | Cuando los compradores hacen consultas al catálogo de una tienda sobre el gateway, la API y la base en tráfico bajo y parejo, con 30 tiendas de 50 productos cada una, el sistema devuelve el catálogo de esa tienda, medido como menos de 1 segundo en el percentil 95. | Prueba de carga; hoy, argumento de volumen |
+| NFR-7 | Disponibilidad | Baja | Cuando una falla hace la caída del servidor o de un servicio sobre el sistema completo en operación normal, sin alta disponibilidad ni failover, el sistema se restablece a mano con Docker Compose y, si hace falta, desde el último backup, medido como menos de 4 horas sin servicio y una pérdida máxima de 24 horas de datos (backup diario). | Política de backup documentada; hoy, argumento |
+| NFR-8 | Escalabilidad | Baja | Restricción declarada, no escenario: el sistema no se diseña para crecer más allá de la escala del escenario (30 tiendas de unos 50 productos cada una). Si la demanda la supera, se rediseña. | Cumplido por decisión (ADR-1 y ADR-10) |
 
 **Compromisos asumidos:** se renuncia a escalabilidad horizontal y alta disponibilidad a cambio de simplicidad y costo cero adicional. Treinta tiendas con tráfico bajo no justifican microservicios, colas ni cachés distribuidas, y cada pieza extra encarece entender el sistema en una semana.
 
 ### Escenarios de calidad
 
-Los dos NFR estrella y los dos de prioridad alta, escritos como escenarios de seis partes. Se leen como una oración: cuando \[fuente\] hace \[estímulo\] sobre \[artefacto\] en \[entorno\], el sistema \[respuesta\], medido como \[medida\].
+Los siete NFR con escenario, desarmados en las seis partes de la Clase 13 (Bass, Clements y Kazman). Cada fila se lee como una oración: cuando \[fuente\] hace \[estímulo\] sobre \[artefacto\] en \[entorno\], el sistema \[respuesta\], medido como \[medida\]. NFR-8 queda afuera porque es una restricción declarada.
 
-| Parte | NFR-1 Mantenibilidad | NFR-2 Costo | NFR-3 Aislamiento | NFR-4 Seguridad |
-| --- | --- | --- | --- | --- |
-| Fuente | Un becario nuevo, sin conocimiento previo del sistema | La universidad | La dueña de la tienda B, autenticada | Un cliente con un token adulterado, vencido o emitido para otra API |
-| Estímulo | Tiene que agregar un campo a Producto | Opera la plataforma durante un año | Intenta crear un producto en la tienda A | Llama a una ruta protegida |
-| Artefacto | Módulo catálogo y la documentación (README, C4, ADRs) | El despliegue completo | Gateway y módulo catálogo | Gateway |
-| Entorno | Desarrollo, al comienzo del año con el equipo renovado | Producción en el servidor de la universidad | Operación normal | Operación normal |
-| Respuesta | Levanta el sistema, hace el cambio dentro del módulo y los tests pasan | Corre en un solo servidor, solo con software libre | Rechaza el alta sin guardar nada; el catálogo de B solo muestra productos de B | Rechaza el pedido antes de que llegue a la API |
-| Medida | Menos de 5 días hábiles, tocando solo el módulo catálogo | Costo mensual adicional igual a cero; ninguna licencia paga | 0 accesos cruzados en la suite; 403 con Problem Details en el 100% de los intentos | 401 con `WWW-Authenticate` en el 100% de los casos de la suite |
+| NFR | Fuente | Estímulo | Artefacto | Entorno | Respuesta | Medida |
+| --- | --- | --- | --- | --- | --- | --- |
+| NFR-1 Mantenibilidad | Un becario nuevo, sin conocimiento previo del sistema | Hace el alta de un campo nuevo en Producto | Módulo catálogo, front y documentación (README, C4, ADRs) | Desarrollo, primera semana con el equipo renovado | Queda levantado en local con el campo funcionando y los tests en verde | Menos de 5 días hábiles desde que clona el repositorio |
+| NFR-2 Costo | Los becarios | Hacen el despliegue y la operación de un mes | Todo el sistema | Producción, en el servidor de la universidad | Funciona solo con software libre, sin servicios pagos de nube | Costo mensual adicional igual a cero; ninguna licencia paga |
+| NFR-3 Aislamiento | La dueña autenticada de una tienda | Hace el alta de un producto en una tienda ajena | Gateway y módulo catálogo | Operación normal | Rechaza con 403 Problem Details sin guardar nada; cada catálogo muestra solo sus productos | 0 escrituras cruzadas en la suite, en memoria y contra PostgreSQL |
+| NFR-4 Seguridad | Un cliente o un atacante | Hace una petición a una ruta protegida sin token, con token adulterado, vencido o de otra audiencia, o con rol insuficiente | Gateway | Operación normal | La rechaza antes de que llegue a la API: 401 con `WWW-Authenticate` o 403 | 100% de los casos de la suite del gateway rechazados |
+| NFR-5 Operabilidad | Un becario | Hace la restauración de la base desde un backup, siguiendo solo el README | Base de datos y compose | Servidor que perdió sus datos | Vuelve a funcionar con los datos del backup y logs legibles | Menos de 3 horas, sin ayuda externa |
+| NFR-6 Rendimiento | Los compradores | Hacen consultas al catálogo de una tienda | Gateway, API y base | Tráfico bajo y parejo, 30 tiendas de 50 productos | Devuelve el catálogo de esa tienda | Menos de 1 s en el percentil 95 |
+| NFR-7 Disponibilidad | Una falla | Hace caer el servidor o un servicio | Sistema completo | Operación normal, sin alta disponibilidad ni failover | Se restablece a mano con Docker Compose y, si hace falta, desde el último backup | Menos de 4 horas sin servicio; pérdida máxima de 24 horas de datos |
 
 ### Utility tree
 
@@ -177,7 +178,7 @@ La API es REST y se consume solo a través del gateway, en `http://localhost:800
 **Convenciones:**
 
 - Errores en formato `application/problem+json` (RFC 9457), con el mismo cuerpo en la API y en el gateway.
-- Diseño: un recurso de otra tienda responde 404, no 403, para no revelar que existe. Hoy el código responde 403 cuando un dueño intenta crear en una tienda ajena; falta decidir cuál queda.
+- Un dueño que intenta escribir en una tienda ajena recibe 403 (NFR-3). El diseño original proponía 404 para no revelar que la tienda existe, pero las tiendas son públicas: la lista y los catálogos se leen sin login, así que un 404 no ocultaría nada y confundiría al dueño.
 - 401 sin token válido, con el header `WWW-Authenticate: Bearer`; 403 cuando el rol no alcanza; 400 para errores de validación y para JSON mal formado (el diseño original proponía 422).
 - Cada petición protegida lleva `Authorization: Bearer <access token>`. El gateway verifica la firma con las claves públicas de Keycloak (JWKS), el emisor, la audiencia `api-incubadora` y el vencimiento. Sin cookies no aplica CSRF. El gateway acepta por CORS una lista de orígenes (`CORS_ORIGIN`): hoy `web` (`:3000`) y Swagger UI (`:8080`). La API todavía responde CORS con `*`, aunque solo la llama el gateway.
 - El front guarda el access token en `sessionStorage`: se borra al cerrar la pestaña, pero un XSS podría leerlo. Se acepta porque el token vence a los 5 minutos y React escapa el contenido que muestra (ADR-11).
@@ -360,7 +361,7 @@ Tres NFRs se verifican con pruebas automatizadas: NFR-1, NFR-3 y NFR-4. Para el 
 | NFR-4 Seguridad general | Tests del gateway: 401 sin token, con firma ajena, con emisor o audiencia equivocados y con token vencido; 403 cuando el rol no alcanza; un `X-Usuario-Id` inventado por el cliente se descarta. Revisión contra OWASP Top 10 | `infra/gateway/tests/` | Parcial: 13 tests en verde; falta la revisión OWASP |
 | NFR-5 Operabilidad | Simulacro: backup con pg\_dump y restauración siguiendo solo el README | Argumento, sin prueba ejecutada | Lo sostienen una sola base (ADR-2), un solo comando para levantar todo (ADR-10) y los logs en la salida estándar (`docker compose logs`). El backup es un `pg_dump` de esa única base |
 | NFR-6 Rendimiento | Datos de prueba con 30 tiendas × 50 productos y medición del tiempo de respuesta del catálogo, objetivo menor a 1 s | Argumento, sin prueba ejecutada | Lo sostiene el volumen: 1.500 productos como máximo, y el catálogo es una sola consulta filtrada por `tienda_id` en la misma máquina, sin servicios externos en el camino. Con tráfico bajo y parejo no hay contención |
-| NFR-7 Disponibilidad | Política de backup diario documentada y probada | Argumento, sin prueba ejecutada | Prioridad baja por decisión (ADR-10): una caída de horas es tolerable. Además, el catálogo público no depende de Keycloak, porque el gateway no valida token en esas rutas; si se cae el proveedor de identidad, solo se frenan las altas |
+| NFR-7 Disponibilidad | Política de backup diario documentada y probada | Argumento, sin prueba ejecutada | Prioridad baja por decisión (ADR-10): una caída de menos de 4 horas es tolerable y el backup diario limita la pérdida a 24 horas. Además, el catálogo público no depende de Keycloak, porque el gateway no valida token en esas rutas; si se cae el proveedor de identidad, solo se frenan las altas |
 | NFR-8 Escalabilidad | Decisión explícita de no escalar horizontalmente | ADR-1 y ADR-10 | Cumplido por decisión |
 
 ## 14. Estado del repositorio y pendientes
@@ -370,7 +371,7 @@ Al 18 de noviembre de 2026, en la rama `pruebareact`, el caso de uso mínimo fun
 | # | Pendiente | Dónde | Qué hacer |
 | --- | --- | --- | --- |
 | 1 | El trabajo vive en `pruebareact`; `main` está atrasado y no hay tag | Git | Merge a `main`, `docker compose down -v` y `up` desde cero, tests en verde, tag `v1.0` |
-| 2 | Tienda ajena: el diseño dice 404 y el código responde 403 | `crear-producto.js`, sección 9, ADR-2 | Decidir uno y alinear código, tests, OpenAPI y documento |
+| 2 | No hay simulacro de restauración (NFR-5) ni prueba de carga del catálogo (NFR-6) | README, sección 13 | Correrlos con los comandos del README y registrar el resultado; si no, quedan como argumento en la sección 13 |
 | 3 | Contraseñas escritas en el compose; falta `.env.example` | `infra/compose/docker-compose.yml` | Pasarlas a `.env` y versionar el ejemplo |
 | 4 | Recargar `/tiendas/1` en el front da 404 de nginx | `apps/frontend` | `nginx.conf` con `try_files $uri /index.html` |
 | 5 | El build del front copia `node_modules` del host | `apps/frontend` | Agregar `.dockerignore` |

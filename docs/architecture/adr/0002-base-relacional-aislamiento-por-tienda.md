@@ -32,6 +32,6 @@ Favorece NFR-1, NFR-2 y NFR-3 (con sus tests). Exige cuidado en NFR-3 en cada ca
 
 Los tests de acceso cruzado en `apps/backend/tests/integration/`: la dueña de la tienda B no puede crear productos en la A y el catálogo de B no muestra productos de A. La misma prueba corre contra PostgreSQL real con el perfil `test` del compose.
 
-## Pendiente
+## Respuesta ante una tienda ajena
 
-El diseño original decía que un recurso de otra tienda responde 404 para no revelar que existe; hoy el código responde 403. Hay que decidir cuál queda y alinear código, tests y OpenAPI.
+Un dueño que intenta escribir en una tienda ajena recibe **403** con Problem Details (NFR-3). El diseño original proponía 404 para no revelar que la tienda existe, pero las tiendas son públicas (la lista y los catálogos se leen sin login), así que un 404 no ocultaría nada y confundiría al dueño.

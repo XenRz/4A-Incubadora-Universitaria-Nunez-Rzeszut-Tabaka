@@ -171,7 +171,7 @@ Todo es software libre y corre en el servidor de la universidad, sin servicios p
 
 ## Documentación
 
-- Documento de arquitectura: NFRs, matriz de Pugh, C4, dominio, API, evaluación y verificación de NFRs.
+- [Documento de arquitectura](docs/architecture/documento-de-arquitectura.md) ([PDF](docs/architecture/documento-de-arquitectura.pdf)): NFRs, matriz de Pugh, C4, dominio, API, ADRs, evaluación y verificación de NFRs.
 - [`docs/architecture/adr/`](docs/architecture/adr/): un archivo por decisión, con su índice.
 - [`docs/architecture/c4/`](docs/architecture/c4/): diagramas de contexto y de contenedores.
 - [`docs/architecture/openapi/openapi.yaml`](docs/architecture/openapi/openapi.yaml): contrato de la API, publicado en Swagger UI.
@@ -179,6 +179,6 @@ Todo es software libre y corre en el servidor de la universidad, sin servicios p
 ## Pendientes conocidos
 
 - Contraseñas de `db` y de la consola de Keycloak escritas en el compose: pasarlas a `.env` y versionar un `.env.example`.
-- Tienda ajena: el diseño dice 404, el código responde 403. Falta decidir.
+- Falta el simulacro de restauración (NFR-5) y la prueba de carga del catálogo (NFR-6); hoy se sostienen con argumentos (ver el documento de arquitectura, sección 13).
 - Keycloak corre en modo desarrollo (sin HTTPS ni base propia); en el servidor hace falta `start` con HTTPS.
 - Funcionalidades del administrador, pedidos y pasarela de pagos: diseñadas (ADR-4 y ADR-5), sin implementar.
