@@ -1,5 +1,7 @@
 # Módulo `pedidos`
 
+**Estado:** diseñado, sin código todavía. Ver el modelo de dominio (Pedido e Ítem) en el documento de arquitectura.
+
 **Responsabilidad:** carrito, compra y registro de ventas de cada tienda.
 
 **Expone en `public-api/`:** consultar pedidos y ventas de una tienda.
