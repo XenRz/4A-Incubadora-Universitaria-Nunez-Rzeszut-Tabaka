@@ -28,12 +28,11 @@ describe('Aislamiento entre tiendas (HTTP)', () => {
   });
   after(() => api.cerrar());
 
-  test('la dueña de A crea un producto en A → 201 con Location', async () => {
+  test('la dueña de A crea un producto en A → 201', async () => {
     const resp = await api.pedir('/tiendas/1/productos', comoUsuario(ANA, { nombre: 'Mate exclusivo de A', precio: 9000, stock: 2 }));
     assert.equal(resp.status, 201);
     const producto = await resp.json();
     assert.equal(producto.tiendaId, 1);
-    assert.equal(resp.headers.get('location'), `/tiendas/1/productos/${producto.id}`);
   });
 
   test('el catálogo de A lo muestra', async () => {

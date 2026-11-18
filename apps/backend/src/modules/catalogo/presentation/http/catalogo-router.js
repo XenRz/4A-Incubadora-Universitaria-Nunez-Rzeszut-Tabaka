@@ -20,7 +20,7 @@ export function crearCatalogoRouter({ listarProductosDeTienda, crearProducto }) 
     // X-Usuario-Id lo pone el gateway con el id del token ya validado (el backend no es accesible desde afuera).
     const usuarioId = req.get('X-Usuario-Id') ?? null;
     const producto = await crearProducto(leerId(req.params.id), usuarioId, req.body ?? {});
-    res.status(201).location(`/tiendas/${producto.tiendaId}/productos/${producto.id}`).json(producto);
+    res.status(201).json(producto); // esto devuelve el producto creado, con su id y demás datos.
   });
 
   return router;

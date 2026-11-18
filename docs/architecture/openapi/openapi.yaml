@@ -20,17 +20,16 @@ paths:
       summary: Listar tiendas
       operationId: listarTiendas
       description: '**Rol requerido:** Cualquier rol'
+      security: []
       responses:
         '200':
-          description: Lista de tiendas
+          description: Lista de tiendas. Si no hay tiendas, devuelve una lista vacía.
           content:
             application/json:
               schema:
                 type: array #array de tiendas
                 items:
                   $ref: '#/components/schemas/Tienda' # una tienda
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
   /tiendas/{id}:
     parameters:
       - name: id
@@ -44,9 +43,10 @@ paths:
       summary: Obtener una tienda
       operationId: obtenerTienda
       description: '**Rol requerido:** Cualquier rol'
+      security: []
       responses:
         '200':
-          description: La tienda
+          description: Datos de la tienda solicitada.
           content:
             application/json:
               schema:
@@ -55,8 +55,6 @@ paths:
           $ref: '#/components/responses/Invalido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
   /tiendas/{id}/productos:
     parameters:
       - name: id
@@ -70,9 +68,10 @@ paths:
       summary: Listar productos de una tienda
       operationId: listarProductos
       description: '**Rol requerido:** Cualquier rol'
+      security: []
       responses:
         '200':
-          description: Lista de productos
+          description: Lista de productos de la tienda. Si no hay productos, devuelve una lista vacía.
           content:
             application/json:
               schema:
@@ -83,11 +82,9 @@ paths:
           $ref: '#/components/responses/Invalido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
     post:
       tags: [Productos]
-      summary: Crear un producto en una tienda
+      summary: Crear un producto en la tienda.
       operationId: crearProducto
       description: |
         **Rol requerido:** dueno
@@ -107,11 +104,6 @@ paths:
         '201':
           description: Producto creado en la tienda
           headers:
-            Location:
-              description: URI del producto creado
-              schema:
-                type: string
-                example: /tiendas/1/productos/13
           content:
             application/json:
               schema:
