@@ -1,0 +1,21 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "url": "/cobros",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$[?(@.monto > 100000)]" }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "id": "{{randomValue type='UUID'}}",
+      "referencia": "{{jsonPath request.body '$.referencia'}}",
+      "estado": "rechazado",
+      "motivo": "Fondos insuficientes (simulado: monto mayor a 100000)"
+    },
+    "transformers": ["response-template"]
+  }
+}
