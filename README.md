@@ -26,13 +26,7 @@ Los diagramas C4 están en [`docs/architecture/c4/`](docs/architecture/c4/) y la
 
 ## Cómo levantarlo
 
-Requisitos: Docker con Docker Compose. Desde la raíz del repo, primero copiá las contraseñas de desarrollo (el `.env` no se versiona; sin él, compose avisa y no arranca):
-
-```bash
-cp infra/compose/.env.example infra/compose/.env
-```
-
-Después levantá todo:
+Requisitos: Docker con Docker Compose. Desde la raíz del repo:
 
 ```bash
 docker compose -f infra/compose/docker-compose.yml up -d --build
@@ -49,7 +43,7 @@ docker compose -f infra/compose/docker-compose.yml ps
 | http://localhost:3000 | **El front.** Tiendas, catálogo y carga de producto en la tienda propia |
 | http://localhost:8000/v1 | Gateway: la única entrada a la API (versión 1, por ejemplo `/v1/tiendas`) |
 | http://localhost:8080 | Swagger UI (contrato en `docs/architecture/openapi/openapi.yaml`); botón **Authorize** para loguearse |
-| http://localhost:8180 | Keycloak (consola de administración: usuario `admin`, contraseña `KC_ADMIN_PASSWORD` de `infra/compose/.env`) |
+| http://localhost:8180 | Keycloak (consola de administración: `admin` / `admin`) |
 
 El esquema de la base lo crean las migraciones de cada módulo (`apps/backend/src/modules/*/infrastructure/persistence/migrations`) y los datos de ejemplo están en `infra/database/init`. Corren **solo la primera vez** que se crea el volumen. Para empezar de cero:
 
@@ -101,7 +95,7 @@ docker compose -f infra/compose/docker-compose.yml exec backend node -e "fetch('
 │   └── frontend/                    # React + Vite, servido por nginx (ver su README)
 ├── docs/architecture/               # adr/, c4/, openapi/openapi.yaml
 ├── infra/
-│   ├── compose/                     # docker-compose.yml (todos los servicios) y .env.example
+│   ├── compose/docker-compose.yml   # todos los servicios
 │   ├── database/init/               # corre las migraciones y los datos de ejemplo
 │   ├── gateway/                     # src/ y tests/
 │   ├── keycloak/                    # realm versionado
@@ -199,6 +193,7 @@ Todo es software libre y corre en el servidor de la universidad, sin servicios p
 
 ## Pendientes conocidos
 
+- Contraseñas de desarrollo de `db` y de la consola de Keycloak escritas en el compose, para levantar con un solo comando. En el servidor real hay que pasarlas a un `.env` fuera del repo.
 - Falta el simulacro de restauración (NFR-5) y la prueba de carga del catálogo (NFR-6); hoy se sostienen con argumentos (ver el documento de arquitectura, sección 13).
 - Keycloak corre en modo desarrollo (sin HTTPS ni base propia); en el servidor hace falta `start` con HTTPS.
 - Funcionalidades del administrador y pedidos: diseñadas (ADR-5), sin implementar.

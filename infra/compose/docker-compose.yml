@@ -14,8 +14,7 @@ services:
     environment:
       POSTGRES_DB: tiendas
       POSTGRES_USER: tiendas
-      # Las contraseñas salen de infra/compose/.env (no se versiona; ver .env.example). Si falta, compose avisa y no arranca.
-      POSTGRES_PASSWORD: "${DB_PASSWORD:?Falta DB_PASSWORD: copiá infra/compose/.env.example a .env}"   # comillas: el mensaje tiene ":"
+      POSTGRES_PASSWORD: tiendas123        # solo de desarrollo; en el servidor real iría en un .env fuera del repo
     volumes:
       - pgdata:/var/lib/postgresql/data   # volumen con nombre: los datos sobreviven a los contenedores
       # Scripts que corren SOLO la primera vez que se crea el volumen (ver infra/database/init/000_migraciones.sql).
@@ -40,7 +39,7 @@ services:
       DB_PORT: 5432
       DB_NAME: tiendas
       DB_USER: tiendas
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: tiendas123
     depends_on:
       db:
         condition: service_healthy   # espera a que Postgres responda, no solo a que arranque
@@ -62,7 +61,7 @@ services:
       DB_PORT: 5432
       DB_NAME: tiendas
       DB_USER: tiendas
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: tiendas123
     depends_on:
       db:
         condition: service_healthy
@@ -75,7 +74,7 @@ services:
     command: ["start-dev", "--import-realm"]          # importa el realm la primera vez
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin              # usuario de la consola de administración
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:?Falta KC_ADMIN_PASSWORD}   # sale de infra/compose/.env
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin              # solo de desarrollo; en el servidor real: .env fuera del repo
       KC_HEALTH_ENABLED: "true"
     volumes:
       - ../keycloak:/opt/keycloak/data/import:ro      # bind mount: el realm versionado en el repo

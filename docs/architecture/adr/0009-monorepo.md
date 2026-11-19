@@ -1,7 +1,7 @@
 # ADR-9: Monorepo con front y back
 
 - **Estado:** Aceptada
-- **Fecha:** 2026-11-03
+- **Fecha:** 2026-11-03 (revisada el 2026-11-19: se quita el módulo `identidad` de la lista, ver ADR-1)
 
 ## Contexto
 
@@ -9,7 +9,7 @@ Primero se separaron front y back en dos repositorios. El equipo cambia cada añ
 
 ## Decisión
 
-Vamos a usar un único repositorio con el front, el back, la infraestructura y la documentación juntos. Los nombres de carpetas van en inglés (`apps/`, `infra/`, `docs/`) y los módulos de negocio en español (`identidad`, `tiendas`, `catalogo`, `pedidos`, `pagos`).
+Vamos a usar un único repositorio con el front, el back, la infraestructura y la documentación juntos. Los nombres de carpetas van en inglés (`apps/`, `infra/`, `docs/`) y los módulos de negocio en español (`tiendas`, `catalogo`, `pedidos`, `pagos`).
 
 ## Alternativas
 
