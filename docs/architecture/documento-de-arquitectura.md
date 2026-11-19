@@ -1,6 +1,6 @@
 # Documento de Arquitectura – 4A Incubadora universitaria
 
-18 de noviembre de 2026 · Núñez, Rzeszut, Tabaka
+19 de noviembre de 2026 · Núñez, Rzeszut, Tabaka
 
 ## 1. Dominio y escenario
 
@@ -37,11 +37,11 @@ Hay tres roles y un único sistema externo: la pasarela de pagos, que se simula.
 **Corte a implementar:**
 
 - [ ] Login con los tres roles — implementado: Keycloak autentica a `admin` (rol `admin`), a las dueñas `ana` y `carla` (rol `dueno`) y al comprador `beto` (rol `comprador`), desde el front `web` o desde Swagger UI. El administrador inicia sesión, pero sus funcionalidades (alta de tiendas y estadísticas) están diseñadas y sin implementar
-- [ ] Carga de producto por el dueño — implementado: formulario en el front y `POST /tiendas/{id}/productos`; el gateway exige el rol `dueno` y la API verifica que el usuario sea el dueño de esa tienda
-- [ ] Visualización del catálogo por el comprador — implementado: lista de tiendas y catálogo en el front, sobre `GET /tiendas` y `GET /tiendas/{id}/productos`, rutas públicas
-- [ ] Verificación de que una tienda no ve los productos de otra — implementado y cubierto por tests de acceso cruzado (sección 13). En el front se ve en vivo: si `carla` intenta cargar un producto en la tienda de `ana`, la API responde 403
+- [ ] Carga de producto por el dueño — implementado: vista «Editar mi tienda» en el front (`GET /v1/mi-tienda`) y `POST /v1/tiendas/{id}/productos`; el gateway exige el rol `dueno` y la API verifica que el usuario sea el dueño de esa tienda
+- [ ] Visualización del catálogo por el comprador — implementado: lista de tiendas y catálogo en el front, sobre `GET /v1/tiendas` y `GET /v1/tiendas/{id}/productos`, rutas públicas
+- [ ] Verificación de que una tienda no ve los productos de otra — implementado y cubierto por tests de acceso cruzado (sección 13). El front solo ofrece cargar productos en la tienda propia; el 403 ante una tienda ajena se muestra desde Swagger UI, con `carla` intentando crear en la tienda de `ana`
 
-Quedan diseñados pero no implementados: el checkout con la pasarela y las estadísticas del administrador.
+Quedan diseñados pero no implementados el checkout (módulo `pedidos`) y las estadísticas del administrador. La pasarela de pagos simulada ya existe (puerto, adaptador HTTP y un contenedor WireMock), pero ningún caso de uso la llama todavía: la conecta el checkout. El carrito del front es una maqueta que avisa que el checkout no está implementado.
 
 ## 3. Requerimientos no funcionales
 
@@ -125,11 +125,11 @@ Los tres roles usan la misma plataforma por HTTPS; la línea punteada de la pasa
 
 ## 7. C4 nivel 2: Contenedores
 
-Son seis contenedores en un solo servidor, definidos en `infra/compose/docker-compose.yml`: `web`, el front propio en React servido por nginx; `gateway`, única entrada a la API, que valida el token, aplica las reglas por rol y le pasa a la API el usuario en `X-Usuario-Id`; `keycloak`, el proveedor de identidad OIDC; `backend`, el monolito modular en Node.js; `db`, PostgreSQL 16; y `swagger-ui`, cliente de prueba que publica el contrato OpenAPI. La pasarela de pagos es externa y la reemplazará un adaptador simulado dentro de `backend`.
+Son siete contenedores en un solo servidor, definidos en `infra/compose/docker-compose.yml`: `web`, el front propio en React servido por nginx; `gateway`, única entrada a la API, que valida el token, aplica las reglas por rol y le pasa a la API el usuario en `X-Usuario-Id`; `keycloak`, el proveedor de identidad OIDC; `backend`, el monolito modular en Node.js; `db`, PostgreSQL 16; `swagger-ui`, cliente de prueba que publica el contrato OpenAPI; y `pasarela-mock`, un WireMock que simula la pasarela de pagos externa (ADR-4).
 
-![C4 nivel 2 · contenedores · 6 contenedores en 1 servidor](c4/c4-nivel-2-contenedores.png)
+![C4 nivel 2 · contenedores · 7 contenedores en 1 servidor](c4/c4-nivel-2-contenedores.png)
 
-El recuadro punteado es el servidor de la universidad. `backend` y `db` no publican puertos: solo se alcanzan por la red interna `backend`. `gateway` está en `backend` y en `identidad`, la red donde vive `keycloak`. `web` no reenvía llamadas: entrega los archivos estáticos y después el navegador habla directo con `keycloak` (login) y con `gateway` (API), que acepta por CORS solo los orígenes de `web` y `swagger-ui` (ADR-8).
+El recuadro punteado es el servidor de la universidad. `backend` y `db` no publican puertos: solo se alcanzan por la red interna `backend`. `gateway` está en `backend` y en `identidad`, la red donde vive `keycloak`. `pasarela-mock` tampoco publica puertos: solo la ve `backend`, por la red `pagos`. La línea punteada entre ellos indica que el adaptador existe pero ningún caso de uso lo llama todavía. `web` no reenvía llamadas: entrega los archivos estáticos y después el navegador habla directo con `keycloak` (login) y con `gateway` (API), que acepta por CORS solo los orígenes de `web` y `swagger-ui` (ADR-8).
 
 Pregunta abierta resuelta: el borrador en draw.io separaba una app para cliente y vendedor y otra para el administrador. Quedó un solo front con vistas por rol, porque es una pieza menos que entender y desplegar (NFR-1); las vistas del administrador todavía no están implementadas.
 
@@ -140,11 +140,11 @@ La **Tienda** es la raíz del aislamiento: todo lo que pertenece a una tienda ll
 | Entidad | Módulo | Atributos clave | Regla de negocio | Estado |
 | --- | --- | --- | --- | --- |
 | Store (Tienda) | Tiendas | id, nombre, dueno\_id | Solo el administrador la da de alta o de baja; `dueno_id` es el `sub` de Keycloak del dueño | Implementada (lectura) |
-| User (Usuario) | Identidad | Vive en Keycloak: usuario, contraseña y rol | role ∈ {admin, dueno, comprador}; la API no tiene tabla de usuarios: el vínculo dueño → tienda es `tiendas.dueno_id` | En Keycloak |
+| User (Usuario) | Keycloak (sin módulo propio) | Vive en Keycloak: usuario, contraseña y rol | role ∈ {admin, dueno, comprador}; la API no tiene tabla de usuarios: el vínculo dueño → tienda es `tiendas.dueno_id` | En Keycloak |
 | Product (Producto) | Catálogo | id, tienda\_id, nombre, precio, stock | Pertenece a una sola tienda; precio mayor a 0 y stock entero mayor o igual a 0. Sin tope por tienda: se asumen menos de 50 (dimensionamiento, NFR-6) | Implementada |
 | Order (Pedido) | Pedidos | id, store\_id, buyer\_id, status, total | Todos sus ítems son de la misma tienda que el pedido | Diseñada |
 | OrderItem (Ítem) | Pedidos | order\_id, product\_id, quantity, unit\_price | El precio se congela al confirmar el pedido | Diseñada |
-| Payment (Pago) | Pagos | id, order\_id, status, gateway\_ref | Lo resuelve la pasarela a través del puerto `PaymentGateway` | Diseñada |
+| Payment (Pago) | Pagos | id, order\_id, status, gateway\_ref | Lo resuelve la pasarela a través del puerto `PasarelaPagos`; el adaptador HTTP y el mock están implementados | Diseñada; pasarela lista, sin caso de uso |
 
 **Invariantes que garantizan el aislamiento:**
 
@@ -158,7 +158,7 @@ Con Keycloak la respuesta queda tomada en la práctica: hay un solo realm, `incu
 
 ## 9. API (resumen del OpenAPI)
 
-La API es REST y se consume solo a través del gateway, en `http://localhost:8000`, sin prefijo de versión y con rutas en español. El contrato vive en `docs/architecture/openapi/openapi.yaml` y Swagger UI lo publica en el puerto 8080. La tienda viaja en la URL y la API verifica el dueño con el usuario del token (sección 8).
+La API es REST y se consume solo a través del gateway, en `http://localhost:8000/v1`, con rutas en español. El prefijo `/v1` versiona el contrato público: el gateway lo quita antes de reenviar al backend y responde 404 a cualquier ruta sin prefijo. El contrato vive en `docs/architecture/openapi/openapi.yaml` y Swagger UI lo publica en el puerto 8080. La tienda viaja en la URL y la API verifica el dueño con el usuario del token (sección 8). En la tabla, las rutas van sin el prefijo `/v1`.
 
 | Método y ruta | Rol (regla del gateway) | Qué hace | Estado |
 | --- | --- | --- | --- |
@@ -169,10 +169,11 @@ La API es REST y se consume solo a través del gateway, en `http://localhost:800
 | GET /tiendas/{id} | Público | Devuelve una tienda | Implementado |
 | GET /tiendas/{id}/productos | Público | Catálogo de una tienda | Implementado |
 | POST /tiendas/{id}/productos | dueno | Crea un producto; la API verifica que el usuario sea el dueño de esa tienda | Implementado |
+| GET /mi-tienda | dueno | Devuelve la tienda del usuario del token; la usa la vista «Editar mi tienda» | Implementado |
 | POST /tiendas | admin | Da de alta una tienda | Regla en el gateway; falta contrato y API |
 | DELETE /tiendas/{id} | admin | Da de baja una tienda | Regla en el gateway; falta contrato y API |
 | POST /pedidos | comprador | Crea un pedido en una tienda | Diseñado |
-| POST /pedidos/{id}/pagos | comprador | Pide el cobro a la pasarela simulada | Diseñado |
+| POST /pedidos/{id}/pagos | comprador | Pide el cobro a la pasarela simulada | Diseñado; la pasarela simulada ya responde |
 | GET /estadisticas | admin | Estadísticas agregadas de todas las tiendas | Diseñado |
 
 **Convenciones:**
@@ -185,7 +186,7 @@ La API es REST y se consume solo a través del gateway, en `http://localhost:800
 
 ## 10. Despliegue
 
-Todo se levanta con un solo comando: `docker compose -f infra/compose/docker-compose.yml up -d --build`. Ese archivo define `db`, `backend`, `keycloak`, `gateway`, `web` y `swagger-ui`, más un servicio `backend-tests` que solo existe con el perfil `test` y corre los tests contra la base real. Todo vive en un único repositorio.
+Todo se levanta con un solo comando: `docker compose -f infra/compose/docker-compose.yml up -d --build`. Ese archivo define `db`, `backend`, `keycloak`, `gateway`, `web`, `swagger-ui` y `pasarela-mock`, más un servicio `backend-tests` que solo existe con el perfil `test` y corre los tests contra la base real. Todo vive en un único repositorio.
 
 | Servicio | Qué corre | Expone | Datos persistentes |
 | --- | --- | --- | --- |
@@ -195,28 +196,29 @@ Todo se levanta con un solo comando: `docker compose -f infra/compose/docker-com
 | backend | Monolito modular en Node.js 22 + Express 5 + pg | Solo red backend | No |
 | db | PostgreSQL 16 (alpine); la primera vez corre las migraciones de cada módulo y los datos de ejemplo de `infra/database/init` | Solo red backend | Volumen pgdata |
 | swagger-ui | Swagger UI 5.17.14 con login OAuth (PKCE) contra Keycloak; cliente de prueba que publica el `openapi.yaml` | 8080 | No |
+| pasarela-mock | WireMock 3.13.2 con dos escenarios de cobro (aprobado, y rechazado si el monto supera 100.000), versionados en infra/pasarela-mock/mappings | Solo red pagos | No |
 | backend-tests | Solo con el perfil `test`: la imagen del backend más `tests/`, contra `db` | Solo red backend | No |
 
-La pasarela de pagos simulada correrá dentro de `backend` como una implementación del puerto `PaymentGateway` (diseñada, todavía sin código); no es un contenedor aparte. Cambiarla por un proveedor real es escribir otra implementación y cambiar una variable de entorno.
+La pasarela de pagos simulada corre en su propio contenedor, `pasarela-mock` (WireMock), y no dentro de `backend`. El backend tiene el puerto `PasarelaPagos` y un adaptador HTTP con timeout de 5 segundos: si la pasarela no responde, la API devuelve 502 con Problem Details. Ningún caso de uso lo llama todavía: lo va a conectar el checkout de `pedidos`. Pasar a un proveedor real es cambiar la URL del adaptador (ADR-4).
 
 **Operación (NFR-5 y NFR-7):**
 
 - Backup diario con `pg_dump` programado en el servidor; se guardan los últimos 7. Pendiente de implementar.
 - Restauración documentada paso a paso en el README y probada con un simulacro. Pendiente.
-- Configuración por variables de entorno. Hoy las contraseñas de `db` y de la consola de Keycloak están escritas en docker-compose.yml; hay que moverlas a `.env` (ya ignorado por git) y versionar un `.env.example`.
-- Las imágenes del backend y del gateway corren con el usuario `node`, no como root, y usan `.dockerignore`.
+- Configuración por variables de entorno. Las contraseñas de desarrollo (`db` y consola de Keycloak) están escritas en `docker-compose.yml` a propósito, para que el sistema levante con un solo comando; en el servidor real van en un `.env` fuera del repositorio.
+- Las imágenes del backend y del gateway corren con el usuario `node`, no como root; backend, gateway y front usan `.dockerignore`.
 - Logs a la salida estándar, consultables con `docker compose logs`.
 
 ## 11. Decisiones de arquitectura (ADRs)
 
-Hay 11 ADRs: 10 aceptados (dos de ellos, ADR-4 y ADR-5, todavía sin código) y 1 reemplazado (ADR-3, por ADR-11). Cada uno sigue el formato de la cátedra y tiene su archivo en `docs/architecture/adr/` (ADR-6), con un `README.md` de índice. ADR-7, ADR-8, ADR-10 y ADR-11 se revisaron el 18/11, cuando se sumó el front.
+Hay 11 ADRs: 10 aceptados y 1 reemplazado (ADR-3, por ADR-11). De los aceptados, ADR-5 todavía no tiene código y ADR-4 está implementado pero sin un caso de uso que lo use. Cada uno sigue el formato de la cátedra y tiene su archivo en `docs/architecture/adr/` (ADR-6), con un `README.md` de índice. ADR-7, 8, 10 y 11 se revisaron el 18/11, cuando se sumó el front; ADR-1, 4, 8, 9 y 10, el 19/11, con los cambios de la rama `dev`.
 
 | ADR | Decisión | Estado |
 | --- | --- | --- |
 | ADR-1 | Monolito modular | Aceptada |
 | ADR-2 | Una base relacional con aislamiento por `store_id` | Aceptada |
 | ADR-3 | Autenticación propia con sesión en el servidor | Reemplazada por ADR-11 |
-| ADR-4 | Pasarela de pagos detrás de un puerto, con implementación simulada | Aceptada |
+| ADR-4 | Pasarela de pagos detrás de un puerto, con implementación simulada | Aceptada; implementada sin caso de uso |
 | ADR-5 | Estadísticas con consultas sobre la misma base | Aceptada |
 | ADR-6 | Documentación viva en el repositorio | Aceptada |
 | ADR-7 | Stack: Node.js 22, Express 5, pg, PostgreSQL 16 y React 19 | Aceptada |
@@ -227,9 +229,9 @@ Hay 11 ADRs: 10 aceptados (dos de ellos, ADR-4 y ADR-5, todavía sin código) y 
 
 ### ADR-1: Monolito modular
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada (revisada el 19/11: se quita el módulo `identidad`)
 - **Contexto:** 30 tiendas con tráfico bajo, un solo servidor y 2 becarios que rotan cada año. El sistema tiene que entenderse en una semana.
-- **Decisión:** Vamos a construir una sola aplicación desplegable, dividida en módulos internos por contexto de negocio: identidad, tiendas, catálogo, pedidos, pagos y estadísticas.
+- **Decisión:** Vamos a construir una sola aplicación desplegable, dividida en módulos internos por contexto de negocio: `tiendas`, `catalogo`, `pedidos` y `pagos` (las estadísticas del administrador se suman como módulo de solo lectura, ADR-5). No hay módulo `identidad`: el login y los roles los resuelve Keycloak (ADR-11), y la API recibe el usuario en `X-Usuario-Id`.
 - **Alternativas:** Monolito en capas (más simple, pero mezcla negocios distintos en las mismas capas); microservicios y event-driven (−3 en la matriz de Pugh: más infraestructura, más operación y más curva de aprendizaje).
 - **Consecuencias:** Una unidad que entender, desplegar y pagar; cada módulo se lee de forma aislada. Se resigna escalar módulos por separado. Hay que cuidar que un módulo no lea las tablas de otro.
 - **NFRs:** Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-8, que tiene prioridad baja.
@@ -256,13 +258,13 @@ Hay 11 ADRs: 10 aceptados (dos de ellos, ADR-4 y ADR-5, todavía sin código) y 
 
 ### ADR-4: Pasarela de pagos detrás de un puerto, con implementación simulada
 
-- **Estado:** Aceptada
-- **Contexto:** La pasarela real no se integra en esta etapa, pero el checkout debe quedar diseñado.
-- **Decisión:** Vamos a definir una interfaz `PaymentGateway` (puerto) en el módulo de pagos, con una implementación simulada que aprueba o rechaza según el monto o una regla fija.
-- **Alternativas:** Integración directa con un proveedor: ata el desarrollo y los tests a un tercero.
-- **Consecuencias:** Se prueba sin red ni credenciales; cambiar de proveedor es escribir otro adaptador. Se resigna probar contra el comportamiento real del proveedor (demoras, webhooks).
-- **NFRs:** Favorece NFR-1 y NFR-2.
-- **Confirmación:** prevista para cuando se implemente el módulo de pagos: un test del cobro corre contra el mock, sin red ni credenciales, y cubre un pago aprobado y uno rechazado.
+- **Estado:** Aceptada (revisada el 19/11). Puerto, adaptador HTTP y mock implementados, sin un caso de uso que los use: el checkout de `pedidos` está diseñado, no implementado.
+- **Contexto:** La pasarela real no se integra en esta etapa, pero el checkout debe quedar diseñado y el sistema tiene que poder probarse sin red ni credenciales de un proveedor.
+- **Decisión:** Vamos a definir el puerto `PasarelaPagos` en el módulo `pagos`, con un adaptador HTTP que llama a `POST /cobros` con timeout de 5 segundos y traduce la respuesta a un formato propio. Como pasarela usamos un contenedor WireMock, `pasarela-mock`, en la red `pagos` y sin puertos publicados, con dos escenarios: aprobado, y rechazado si el monto supera 100.000. Si la pasarela no responde, el adaptador lanza `PasarelaNoDisponible` y la API devuelve 502.
+- **Alternativas:** Integración directa con un proveedor: ata el desarrollo y los tests a un tercero. Un mock en código dentro de `backend` (la primera versión de este ADR): un contenedor menos, pero el adaptador HTTP real quedaría sin ejercitar y cambiar de proveedor implicaría tocar código.
+- **Consecuencias:** Se prueba sin red ni credenciales, y pasar a un proveedor real es cambiar la URL del adaptador. Se resigna probar contra el comportamiento real del proveedor (demoras, webhooks). Suma un contenedor que operar. Sin caso de uso, el puerto todavía no está ejercitado por la aplicación.
+- **NFRs:** Favorece NFR-1 y NFR-2. Perjudica un poco NFR-5 por el contenedor extra.
+- **Confirmación:** desde el contenedor `backend`, un `POST` a `http://pasarela-mock:8080/cobros` con monto 5000 devuelve `aprobado` y con monto 150000 devuelve `rechazado` (comandos en el README). Cuando exista el checkout, pasa a ser un test automatizado.
 
 ### ADR-5: Estadísticas con consultas sobre la misma base
 
@@ -296,19 +298,19 @@ Hay 11 ADRs: 10 aceptados (dos de ellos, ADR-4 y ADR-5, todavía sin código) y 
 
 ### ADR-8: Front propio como SPA estática; el gateway es la única entrada a la API
 
-- **Estado:** Aceptada (revisada el 18/11). La primera versión ponía a `web` como única puerta de entrada y proxy de la API; al implementarlo, el gateway (ADR-11) ya cumplía ese rol y `web` quedó como servidor de archivos estáticos.
+- **Estado:** Aceptada (revisada el 18/11 y el 19/11). La primera versión ponía a `web` como única puerta de entrada y proxy de la API; al implementarlo, el gateway (ADR-11) ya cumplía ese rol y `web` quedó como servidor de archivos estáticos.
 - **Contexto:** Hay que servir la interfaz de los tres roles y exponer la API de forma segura. El gateway ya es la única entrada a la API, y `backend` y `db` no publican puertos.
-- **Decisión:** Vamos a tener un contenedor `web` propio (nginx) que solo sirve el build estático de React, con vistas por rol en un solo front. El navegador habla directo con Keycloak para el login (PKCE, cliente público `web-incubadora`) y con el gateway para la API, que acepta por CORS solo los orígenes de `CORS_ORIGIN`.
+- **Decisión:** Vamos a tener un contenedor `web` propio (nginx) que solo sirve el build estático de React, con vistas por rol en un solo front. El navegador habla directo con Keycloak para el login (PKCE, cliente público `web-incubadora`) y con el gateway para la API, bajo `/v1`. El gateway acepta por CORS solo los orígenes de `CORS_ORIGIN`.
 - **Alternativas:** Que el nginx de `web` haga de proxy inverso hacia el gateway y Keycloak: un solo origen y sin CORS, pero una configuración de nginx más que entender. Servir la interfaz desde la API o desde el gateway: un contenedor menos, pero mezcla la interfaz con el negocio o con la seguridad. Dos fronts separados (cliente-vendedor y administrador), como el borrador en draw.io: el doble de piezas.
-- **Consecuencias:** `web` no tiene lógica ni secretos; cada contenedor hace una sola cosa. Se resigna tener un solo puerto: hacia el usuario quedan 3000 (`web`), 8000 (`gateway`) y 8180 (`keycloak`), más 8080 de Swagger UI. Hay que mantener alineados `CORS_ORIGIN` y el redirect URI del realm. Las URLs de Keycloak y del gateway están escritas en el código del front, y nginx necesita un fallback a `index.html` para que una recarga en `/tiendas/1` no dé 404.
+- **Consecuencias:** `web` no tiene lógica ni secretos; cada contenedor hace una sola cosa, y nginx ya resuelve las recargas de rutas del front con un fallback a `index.html`. Se resigna tener un solo puerto: hacia el usuario quedan 3000 (`web`), 8000 (`gateway`) y 8180 (`keycloak`), más 8080 de Swagger UI. Hay que mantener alineados `CORS_ORIGIN` y el redirect URI del realm, y las URLs de Keycloak y del gateway están escritas en el código del front.
 - **NFRs:** Favorece NFR-1 (cada contenedor hace una sola cosa) y NFR-4 (la API sigue sin puerto publicado). Perjudica un poco NFR-5, por los orígenes y las URLs que hay que configurar.
-- **Confirmación:** `docker compose ps` muestra que `backend` y `db` no publican puertos y que `web` solo publica el 3000. El gateway rechaza con 404 cualquier ruta que no esté en su tabla de reglas.
+- **Confirmación:** `docker compose ps` muestra que `backend` y `db` no publican puertos y que `web` solo publica el 3000. El gateway rechaza con 404 cualquier ruta que no esté en su tabla de reglas o que no lleve el prefijo `/v1`.
 
 ### ADR-9: Monorepo con front y back
 
-- **Estado:** Aceptada
+- **Estado:** Aceptada (revisada el 19/11: se quita `identidad` de la lista de módulos)
 - **Contexto:** Primero se separaron front y back en dos repositorios.
-- **Decisión:** Vamos a usar un único repositorio con el front, el back y `docs/` juntos, con nombres de carpetas en inglés (apps/, infra/, docs/) y los módulos de negocio en español (identidad, tiendas, catalogo, pedidos, pagos).
+- **Decisión:** Vamos a usar un único repositorio con el front, el back y `docs/` juntos, con nombres de carpetas en inglés (`apps/`, `infra/`, `docs/`) y los módulos de negocio en español (`tiendas`, `catalogo`, `pedidos`, `pagos`).
 - **Alternativas:** Dos repositorios, uno para el front y otro para el back: es la opción que se probó primero y se descartó.
 - **Consecuencias:** Un solo clon, un solo `docker compose up`, un solo tag `v1.0` para la entrega; los cambios que tocan front y back van en el mismo commit. Se resigna versionar y desplegar front y back por separado, algo que no hace falta a esta escala.
 - **NFRs:** Favorece NFR-1 y NFR-5.
@@ -316,13 +318,13 @@ Hay 11 ADRs: 10 aceptados (dos de ellos, ADR-4 y ADR-5, todavía sin código) y 
 
 ### ADR-10: Despliegue con Docker Compose en un solo servidor
 
-- **Estado:** Aceptada (revisada el 18/11: se suma `web`)
+- **Estado:** Aceptada (revisada el 18/11: se suma `web`; y el 19/11: se suma `pasarela-mock`)
 - **Contexto:** Un solo servidor de la universidad, sin servicios de nube y con becarios que tienen que desplegar sin ayuda.
-- **Decisión:** Vamos a definir los servicios en Compose y levantarlos con un solo comando, igual en local que en el servidor. Es un solo archivo, `infra/compose/docker-compose.yml`, con `db`, `backend`, `keycloak`, `gateway`, `web` y `swagger-ui`; el servicio `backend-tests` solo existe con el perfil `test`.
+- **Decisión:** Vamos a definir los servicios en Compose y levantarlos con un solo comando, igual en local que en el servidor. Es un solo archivo, `infra/compose/docker-compose.yml`, con `db`, `backend`, `keycloak`, `gateway`, `web`, `swagger-ui` y `pasarela-mock`; el servicio `backend-tests` solo existe con el perfil `test`.
 - **Alternativas:** Instalación manual en el servidor (difícil de reproducir); Kubernetes o servicios de nube (costo y complejidad injustificados).
-- **Consecuencias:** El entorno local es idéntico al de producción y el onboarding empieza con un comando. Se resignan alta disponibilidad y escalado automático; el servidor es un único punto de falla. Hoy algunas contraseñas de desarrollo están escritas en el compose y hay que pasarlas a `.env`.
+- **Consecuencias:** El entorno local es idéntico al de producción y el onboarding empieza con un comando. Se resignan alta disponibilidad y escalado automático; el servidor es un único punto de falla. Las contraseñas de desarrollo quedan escritas en el compose a propósito, para levantar sin pasos previos; en el servidor real van en un `.env` fuera del repositorio.
 - **NFRs:** Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-7, que tiene prioridad baja.
-- **Confirmación:** `docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los seis servicios en una máquina limpia; es el primer paso de la prueba de onboarding (NFR-1).
+- **Confirmación:** `docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los siete servicios en una máquina limpia; es el primer paso de la prueba de onboarding (NFR-1).
 
 ### ADR-11: Identidad con Keycloak y gateway como única entrada
 
@@ -341,7 +343,7 @@ La debilidad principal es que el aislamiento descansa en dos cosas que no garant
 | Hallazgo | Onboarding · NFR-1 (A, A) | Aislamiento · NFR-3 (A, M) | Autenticación · NFR-4 (A, M) |
 | --- | --- | --- | --- |
 | Enfoque | Monolito modular con las mismas capas en cada módulo, un solo compose y Keycloak + gateway (ADR-1, ADR-10, ADR-11) | La tienda viaja en la URL, la API verifica al dueño y los repositorios filtran por `tienda_id` (ADR-2) | El gateway valida firma, emisor, audiencia y vencimiento con las claves públicas de Keycloak (ADR-11) |
-| Punto de sensibilidad | El tiempo de onboarding depende de cuántas piezas hay que entender: seis contenedores, un front en React y un concepto nuevo, OIDC | Depende de que cada caso de uso que escribe verifique al dueño y de que cada consulta filtre por `tienda_id` | Depende de que toda ruta protegida esté en la tabla de reglas y de que la API solo sea alcanzable a través del gateway |
+| Punto de sensibilidad | El tiempo de onboarding depende de cuántas piezas hay que entender: siete contenedores, un front en React y un concepto nuevo, OIDC | Depende de que cada caso de uso que escribe verifique al dueño y de que cada consulta filtre por `tienda_id` | Depende de que toda ruta protegida esté en la tabla de reglas y de que la API solo sea alcanzable a través del gateway |
 | Punto de trade-off | Keycloak mejora la seguridad (NFR-4) a costa de comprensibilidad (NFR-1) y operación (NFR-5) | Una base compartida baja el costo (NFR-2), pero deja el aislamiento en manos del código (NFR-3) | El token sin estado evita consultar a Keycloak en cada pedido, pero no se puede revocar antes de sus 5 minutos |
 | Riesgo | Un becario sin experiencia en OIDC puede tardar en entender el realm y los tokens; Keycloak corre en modo desarrollo, sin base persistente | Un endpoint nuevo que olvide la verificación expone datos de otra tienda; Row-Level Security no está implementado | La API confía en `X-Usuario-Id`: si alguien publica el puerto del backend, cualquiera puede hacerse pasar por otro usuario |
 | No-riesgo | El código de negocio se lee módulo por módulo, y el test de arquitectura impide que la estructura se erosione | El cliente no elige el usuario: `X-Usuario-Id` lo arma el gateway desde el token validado | Una ruta que no está en la tabla de reglas responde 404 y no llega a la API: el gateway falla cerrado |
@@ -356,7 +358,7 @@ Tres NFRs se verifican con pruebas automatizadas: NFR-1, NFR-3 y NFR-4. Para el 
 | NFR | Evidencia en la entrega | Dónde se ve | Resultado |
 | --- | --- | --- | --- |
 | NFR-1 Mantenibilidad | Test de arquitectura que falla si un módulo entra a otro sin pasar por su `public-api` o si se rompen las capas; prueba de onboarding: alguien ajeno clona el repositorio, lo levanta y agrega un campo a Producto siguiendo solo el README | `apps/backend/tests/architecture/`, README, tiempo medido | Parcial: el test de arquitectura está en verde; falta la prueba de onboarding |
-| NFR-2 Costo | Inventario de dependencias, todas con licencia libre; un solo servidor, sin servicios pagos | Tabla de dependencias en el README | Por inventario: Keycloak y Swagger UI (Apache 2.0), PostgreSQL (licencia PostgreSQL), Express, pg, jose, React, react-router y Vite (MIT), nginx (BSD-2-Clause). Todo corre en el servidor de la universidad: costo mensual adicional cero. La tabla está en el README |
+| NFR-2 Costo | Inventario de dependencias, todas con licencia libre; un solo servidor, sin servicios pagos | Tabla de dependencias en el README | Por inventario: Keycloak y Swagger UI (Apache 2.0), PostgreSQL (licencia PostgreSQL), Express, pg, jose, React, react-router y Vite (MIT), nginx (BSD-2-Clause), WireMock (Apache 2.0). Todo corre en el servidor de la universidad: costo mensual adicional cero. La tabla está en el README |
 | NFR-3 Aislamiento | Tests automatizados de acceso cruzado: la dueña de la tienda A carga un producto, el catálogo de la tienda B no lo muestra y la dueña de B recibe 403 al intentar crear en A; la misma prueba corre contra PostgreSQL real | `apps/backend/tests/integration/`, perfil `test` del compose | Cumplido en la suite del backend (45 tests en verde); falta registrar la corrida contra la base del compose |
 | NFR-4 Seguridad general | Tests del gateway: 401 sin token, con firma ajena, con emisor o audiencia equivocados y con token vencido; 403 cuando el rol no alcanza; un `X-Usuario-Id` inventado por el cliente se descarta. Revisión contra OWASP Top 10 | `infra/gateway/tests/` | Parcial: 13 tests en verde; falta la revisión OWASP |
 | NFR-5 Operabilidad | Simulacro: backup con pg\_dump y restauración siguiendo solo el README | Argumento, sin prueba ejecutada | Lo sostienen una sola base (ADR-2), un solo comando para levantar todo (ADR-10) y los logs en la salida estándar (`docker compose logs`). El backup es un `pg_dump` de esa única base |
@@ -366,21 +368,18 @@ Tres NFRs se verifican con pruebas automatizadas: NFR-1, NFR-3 y NFR-4. Para el 
 
 ## 14. Estado del repositorio y pendientes
 
-Al 18 de noviembre de 2026, en la rama `pruebareact`, el caso de uso mínimo funciona de punta a punta desde el front: login con Keycloak, lista de tiendas, catálogo y carga de producto, con el aislamiento verificado por tests. Desde el 12/11 se resolvieron el usuario administrador, el `security: []` del OpenAPI, el cliente sobrante del realm, el front, los ADRs en el repositorio y el README. Lo que falta, ordenado por lo que bloquea la entrega:
+Al 19 de noviembre de 2026, en la rama `dev`, el caso de uso mínimo funciona de punta a punta desde el front: login con Keycloak, lista de tiendas, catálogo y carga de producto desde «Editar mi tienda», con el aislamiento verificado por tests (43 en el backend y 14 en el gateway, en verde). Desde el 18/11 se sumaron el versionado `/v1`, la vista «Editar mi tienda» y la pasarela simulada, y se limpiaron la regla huérfana del gateway, el CORS del backend y el build del front. Lo que falta, ordenado por lo que bloquea la entrega:
 
 | # | Pendiente | Dónde | Qué hacer |
 | --- | --- | --- | --- |
-| 1 | El trabajo vive en `pruebareact`; `main` está atrasado y no hay tag | Git | Merge a `main`, `docker compose down -v` y `up` desde cero, tests en verde, tag `v1.0` |
+| 1 | El trabajo vive en `dev`; `main` está atrasado y no hay tag | Git | Merge a `main`, `docker compose down -v` y `up` desde cero, tests en verde, tag `v1.0` |
 | 2 | No hay simulacro de restauración (NFR-5) ni prueba de carga del catálogo (NFR-6) | README, sección 13 | Correrlos con los comandos del README y registrar el resultado; si no, quedan como argumento en la sección 13 |
-| 3 | Contraseñas escritas en el compose; falta `.env.example` | `infra/compose/docker-compose.yml` | Pasarlas a `.env` y versionar el ejemplo |
-| 4 | Recargar `/tiendas/1` en el front da 404 de nginx | `apps/frontend` | `nginx.conf` con `try_files $uri /index.html` |
-| 5 | El build del front copia `node_modules` del host | `apps/frontend` | Agregar `.dockerignore` |
+| 3 | Falta la prueba de onboarding (NFR-1) y la revisión OWASP (NFR-4) | README, sección 13 | Hacerlas y registrar el resultado |
+| 4 | El checkout no está implementado: `pedidos` no existe y nadie llama a la pasarela | módulos `pedidos` y `pagos` | Diseñado; conectar `pedidos` con la `public-api` de `pagos` (ADR-4) |
+| 5 | El carrito del front es una maqueta | `apps/frontend` | Avisa que el checkout no está implementado; se conecta junto con el punto 4 |
 | 6 | URLs de Keycloak y del gateway repetidas en cuatro archivos del front | `apps/frontend/src` | Un solo `config.js` con `import.meta.env.VITE_*` |
-| 7 | Resto de la práctica: la regla `GET /productos` en el gateway | `infra/gateway/src/app.js` | Borrarla |
-| 8 | La API responde CORS con `*` aunque solo la llama el gateway | `apps/backend/src/main/http.js` | Quitarlo |
-| 9 | Falta la prueba de onboarding (NFR-1) y la revisión OWASP (NFR-4) | README, sección 13 | Hacerlas y registrar el resultado |
-| 10 | El administrador entra pero no tiene funcionalidades | módulos `tiendas` y estadísticas | Diseñado (ADR-5); opcional para la entrega |
-| 11 | La pasarela de pagos simulada no tiene código | módulo `pagos` | Opcional: el puerto `PaymentGateway` y su mock (ADR-4) |
+| 7 | Contraseñas de desarrollo escritas en el compose | `infra/compose/docker-compose.yml` | Aceptado para desarrollo; en el servidor real, `.env` fuera del repositorio |
+| 8 | El administrador entra pero no tiene funcionalidades | módulos `tiendas` y estadísticas | Diseñado (ADR-5); opcional para la entrega |
 
 ## Anexo: cómo levantarlo y usuarios de prueba
 
@@ -389,8 +388,9 @@ El mismo contenido va en el README del repositorio; la consigna pide ahí cómo 
 1. Clonar el repositorio y entrar a la carpeta.
 2. Ejecutar `docker compose -f infra/compose/docker-compose.yml up -d --build`.
 3. Esperar a que `keycloak` figure como `healthy` en `docker compose -f infra/compose/docker-compose.yml ps`.
-4. Abrir el front en `http://localhost:3000`, tocar «Iniciar sesión» y entrar con un usuario de prueba. Para probar la API sin el front, Swagger UI está en `http://localhost:8080` (botón Authorize).
+4. Abrir el front en `http://localhost:3000`, tocar «Iniciar sesión» y entrar con un usuario de prueba. Para probar la API sin el front, Swagger UI está en `http://localhost:8080` (botón Authorize); la API está en `http://localhost:8000/v1`.
 5. Para los tests: `npm ci` y `npm test` en `apps/backend` y en `infra/gateway`; contra la base real, `docker compose -f infra/compose/docker-compose.yml --profile test run --rm --build backend-tests`.
+6. Para la pasarela simulada: desde el contenedor `backend`, un `POST` a `http://pasarela-mock:8080/cobros` con monto 5000 devuelve `aprobado` y con 150000, `rechazado`. Los comandos están en el README.
 
 Los usuarios de prueba los importa Keycloak desde `infra/keycloak/realm-incubadora.json`; las contraseñas están en ese archivo, no en este documento. Las tiendas y sus productos de ejemplo los carga `infra/database/init/datos-ejemplo.sql`.
 
@@ -398,7 +398,7 @@ Los usuarios de prueba los importa Keycloak desde `infra/keycloak/realm-incubado
 | --- | --- | --- | --- |
 | `admin` | admin | Ninguna | Login de administrador (sus funcionalidades están diseñadas, sin implementar) |
 | `ana` | dueno | Tienda de mates Unahur (id 1) | Carga de producto en su tienda |
-| `carla` | dueno | Repostería (id 2) | Que no puede cargar productos en la tienda de ana (403) |
+| `carla` | dueno | Repostería (id 2) | Que no puede cargar productos en la tienda de ana: 403, probado desde Swagger UI |
 | `beto` | comprador | Ninguna | Catálogo de cualquier tienda; no ve el formulario de carga |
 
 Estructura actual del monorepo:
@@ -409,20 +409,21 @@ Estructura actual del monorepo:
 │   ├── backend/
 │   │   ├── src/
 │   │   │   ├── main/                # composition root
-│   │   │   ├── modules/             # identidad, tiendas, catalogo, pedidos, pagos
+│   │   │   ├── modules/             # tiendas, catalogo, pedidos, pagos
 │   │   │   │   └── <modulo>/        # domain, application, infrastructure, presentation, public-api
 │   │   │   └── shared/              # kernel (errores) e infraestructura (config, base)
 │   │   └── tests/                   # unit, integration, architecture
 │   └── frontend/                    # React + Vite, servido por nginx
 │       └── src/                     # app/, features/{autenticacion,vitrina}, shared/
-├── docs/architecture/               # adr/, c4/, openapi/openapi.yaml
+├── docs/architecture/               # adr/, c4/, img/, openapi/openapi.yaml, documento
 ├── infra/
 │   ├── compose/docker-compose.yml   # todos los servicios
 │   ├── database/init/               # corre las migraciones y los datos de ejemplo
 │   ├── gateway/                     # src/ y tests/
-│   └── keycloak/                    # realm versionado
+│   ├── keycloak/                    # realm versionado
+│   └── pasarela-mock/mappings/      # escenarios de WireMock
 ├── .gitignore
 └── README.md
 ```
 
-De los cinco módulos del backend, solo `tiendas` y `catalogo` tienen código; los otros tres tienen la estructura de capas lista y un README con su responsabilidad. En el front existen las features `autenticacion` y `vitrina`.
+De los cuatro módulos del backend, `tiendas` y `catalogo` tienen casos de uso; `pagos` tiene el puerto, el adaptador HTTP y la `public-api`, sin caso de uso; y `pedidos` tiene la estructura de capas lista. En el front existen las features `autenticacion` y `vitrina`.
