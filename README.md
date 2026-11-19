@@ -20,12 +20,19 @@ Plataforma multi-tienda para los emprendedores de una incubadora universitaria. 
 | `swagger-ui` | Documentación y cliente de prueba de la API | 8080 |
 | `backend` | Monolito modular (Node.js 22 + Express 5) | — (solo red interna) |
 | `db` | PostgreSQL 16 | — (solo red interna) |
+| `pasarela-mock` | Pasarela de pagos simulada (WireMock): cobro aprobado, o rechazado si el monto supera 100000 | — (solo red interna `pagos`) |
 
 Los diagramas C4 están en [`docs/architecture/c4/`](docs/architecture/c4/) y las decisiones en [`docs/architecture/adr/`](docs/architecture/adr/).
 
 ## Cómo levantarlo
 
-Requisitos: Docker con Docker Compose. Desde la raíz del repo:
+Requisitos: Docker con Docker Compose. Desde la raíz del repo, primero copiá las contraseñas de desarrollo (el `.env` no se versiona; sin él, compose avisa y no arranca):
+
+```bash
+cp infra/compose/.env.example infra/compose/.env
+```
+
+Después levantá todo:
 
 ```bash
 docker compose -f infra/compose/docker-compose.yml up -d --build
@@ -39,10 +46,10 @@ docker compose -f infra/compose/docker-compose.yml ps
 
 | URL | Qué es |
 |---|---|
-| http://localhost:3000 | **El front.** Tiendas, catálogo y carga de producto |
-| http://localhost:8000 | Gateway: la única entrada a la API |
+| http://localhost:3000 | **El front.** Tiendas, catálogo y carga de producto en la tienda propia |
+| http://localhost:8000/v1 | Gateway: la única entrada a la API (versión 1, por ejemplo `/v1/tiendas`) |
 | http://localhost:8080 | Swagger UI (contrato en `docs/architecture/openapi/openapi.yaml`); botón **Authorize** para loguearse |
-| http://localhost:8180 | Keycloak (consola de administración: `admin` / `admin`) |
+| http://localhost:8180 | Keycloak (consola de administración: usuario `admin`, contraseña `KC_ADMIN_PASSWORD` de `infra/compose/.env`) |
 
 El esquema de la base lo crean las migraciones de cada módulo (`apps/backend/src/modules/*/infrastructure/persistence/migrations`) y los datos de ejemplo están en `infra/database/init`. Corren **solo la primera vez** que se crea el volumen. Para empezar de cero:
 
@@ -63,9 +70,21 @@ Los importa Keycloak desde `infra/keycloak/realm-incubadora.json`. Las contrase�
 
 **Demo del caso de uso mínimo:**
 
-1. Entrar a http://localhost:3000 como `ana`, abrir "Tienda de mates Unahur" y cargar un producto.
-2. Abrir "Repostería": el producto no aparece ahí.
-3. Cerrar sesión, entrar como `carla`, abrir la tienda de ana e intentar cargar un producto: la API responde 403.
+1. Entrar a http://localhost:3000 como `ana`, ir a "Editar mi tienda" (`/mi-tienda`) y cargar un producto.
+2. Volver al inicio y abrir "Repostería": el producto no aparece ahí.
+3. El 403 entre tiendas se muestra con Swagger, porque el front solo ofrece cargar productos en la tienda propia: en http://localhost:8080, **Authorize** como `carla` y `POST /v1/tiendas/1/productos` (la tienda de ana). La API responde 403.
+
+**Demo de la pasarela de pagos (simulada):** todavía ningún caso de uso la llama (el checkout de `pedidos` está diseñado, no implementado), así que se prueba directo desde el contenedor `backend`. Correr en **Git Bash** (en PowerShell se rompen las comillas):
+
+```bash
+# Monto 5000: estado "aprobado"
+docker compose -f infra/compose/docker-compose.yml exec backend node -e "fetch('http://pasarela-mock:8080/cobros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto:5000,referencia:'demo-1'})}).then(r=>r.json()).then(console.log)"
+```
+
+```bash
+# Monto 150000 (mayor a 100000): estado "rechazado"
+docker compose -f infra/compose/docker-compose.yml exec backend node -e "fetch('http://pasarela-mock:8080/cobros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto:150000,referencia:'demo-2'})}).then(r=>r.json()).then(console.log)"
+```
 
 ## Estructura del repositorio
 
@@ -75,22 +94,23 @@ Los importa Keycloak desde `infra/keycloak/realm-incubadora.json`. Las contrase�
 │   ├── backend/
 │   │   ├── src/
 │   │   │   ├── main/                # composition root: el único que conoce todas las piezas
-│   │   │   ├── modules/             # identidad, tiendas, catalogo, pedidos, pagos
+│   │   │   ├── modules/             # tiendas, catalogo, pedidos, pagos
 │   │   │   │   └── <modulo>/        # domain, application, infrastructure, presentation, public-api
 │   │   │   └── shared/              # kernel (tenancy, errores) e infraestructura (config, base, logging)
 │   │   └── tests/                   # unit, integration, architecture
 │   └── frontend/                    # React + Vite, servido por nginx (ver su README)
 ├── docs/architecture/               # adr/, c4/, openapi/openapi.yaml
 ├── infra/
-│   ├── compose/docker-compose.yml   # todos los servicios
+│   ├── compose/                     # docker-compose.yml (todos los servicios) y .env.example
 │   ├── database/init/               # corre las migraciones y los datos de ejemplo
 │   ├── gateway/                     # src/ y tests/
-│   └── keycloak/                    # realm versionado
+│   ├── keycloak/                    # realm versionado
+│   └── pasarela-mock/mappings/      # escenarios de WireMock: cobro aprobado y rechazado
 ├── .gitignore
 └── README.md
 ```
 
-De los cinco módulos del backend, `tiendas` y `catalogo` tienen código; `identidad`, `pedidos` y `pagos` tienen la estructura de capas y un README con su responsabilidad.
+De los cuatro módulos del backend, `tiendas` y `catalogo` tienen código completo; `pagos` tiene el puerto, el adaptador HTTP y la public-api, pero ningún caso de uso los llama todavía; `pedidos` tiene la estructura de capas y un README con su responsabilidad. No hay módulo `identidad`: el login y los roles los resuelve Keycloak, y la API recibe el usuario en `X-Usuario-Id` (ADR-11).
 
 ### Reglas del backend
 
@@ -106,7 +126,7 @@ El test de arquitectura (`apps/backend/tests/architecture/dependencias.test.js`)
 2. Regla en `modules/catalogo/domain/producto.js` y su test en `tests/unit/`.
 3. Columna en `producto-repository-pg.js` y en la respuesta de los casos de uso.
 4. Esquema en `docs/architecture/openapi/openapi.yaml`.
-5. Campo en `apps/frontend/src/features/vitrina/CargaProducto.jsx` y `VistaTienda.jsx`.
+5. Campo en `apps/frontend/src/features/vitrina/CargaProducto.jsx` y `FilaProducto.jsx`.
 6. `npm test` en `apps/backend` y `docker compose ... down -v && up -d --build`.
 
 ## Tests
@@ -145,6 +165,7 @@ Todo es software libre y corre en el servidor de la universidad, sin servicios p
 | PostgreSQL 16 | `db` | PostgreSQL License |
 | Keycloak 26 | `keycloak` | Apache 2.0 |
 | Swagger UI 5 | `swagger-ui` | Apache 2.0 |
+| WireMock 3 | `pasarela-mock` | Apache 2.0 |
 
 ## Operación
 
@@ -178,7 +199,8 @@ Todo es software libre y corre en el servidor de la universidad, sin servicios p
 
 ## Pendientes conocidos
 
-- Contraseñas de `db` y de la consola de Keycloak escritas en el compose: pasarlas a `.env` y versionar un `.env.example`.
 - Falta el simulacro de restauración (NFR-5) y la prueba de carga del catálogo (NFR-6); hoy se sostienen con argumentos (ver el documento de arquitectura, sección 13).
 - Keycloak corre en modo desarrollo (sin HTTPS ni base propia); en el servidor hace falta `start` con HTTPS.
-- Funcionalidades del administrador, pedidos y pasarela de pagos: diseñadas (ADR-4 y ADR-5), sin implementar.
+- Funcionalidades del administrador y pedidos: diseñadas (ADR-5), sin implementar.
+- Conectar `pedidos` con `pagos` (checkout): el puerto, el adaptador y el mock de la pasarela existen (ADR-4), pero ningún caso de uso llama a `cobrar`.
+- El carrito del front es maqueta: "Agregar al carrito" solo muestra un aviso de que el checkout no está implementado.

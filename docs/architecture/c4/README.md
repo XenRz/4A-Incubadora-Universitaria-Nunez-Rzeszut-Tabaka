@@ -10,6 +10,6 @@ Tres roles (administrador, dueño de tienda y comprador) y un único sistema ext
 
 ## Nivel 2 · Contenedores
 
-Seis contenedores en un servidor: `web`, `gateway`, `keycloak`, `swagger-ui`, `backend` y `db`. Solo el gateway abre la API; `backend` y `db` no publican puertos.
+Siete contenedores en un servidor: `web`, `gateway`, `keycloak`, `swagger-ui`, `backend`, `db` y `pasarela-mock` (WireMock que simula la pasarela; está levantado pero todavía ningún caso de uso lo llama). Solo el gateway abre la API; `backend`, `db` y `pasarela-mock` no publican puertos.
 
 ![C4 nivel 2: contenedores](c4-nivel-2-contenedores.png)

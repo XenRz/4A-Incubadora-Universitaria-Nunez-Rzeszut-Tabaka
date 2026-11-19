@@ -9,7 +9,7 @@ Un ADR aceptado no se borra: si la decisión cambia, se escribe uno nuevo que lo
 | [ADR-1](0001-monolito-modular.md) | Monolito modular | Aceptada | Test de arquitectura |
 | [ADR-2](0002-base-relacional-aislamiento-por-tienda.md) | Una base relacional con aislamiento por tienda | Aceptada | Tests de acceso cruzado (HTTP y PostgreSQL) |
 | [ADR-3](0003-autenticacion-propia-con-sesion.md) | Autenticación propia con sesión en el servidor | Reemplazada por ADR-11 | — |
-| [ADR-4](0004-pasarela-de-pagos-detras-de-un-puerto.md) | Pasarela de pagos detrás de un puerto, con mock | Aceptada, sin código | Prevista: test contra el mock |
+| [ADR-4](0004-pasarela-de-pagos-detras-de-un-puerto.md) | Pasarela de pagos detrás de un puerto, con mock | Aceptada; puerto, adaptador y mock implementados, sin caso de uso | Cobro aprobado y rechazado contra el mock (`pasarela-mock`) |
 | [ADR-5](0005-estadisticas-sobre-la-misma-base.md) | Estadísticas con consultas sobre la misma base | Aceptada, sin código | Prevista: test de autorización solo admin |
 | [ADR-6](0006-documentacion-viva-en-el-repositorio.md) | Documentación viva en el repositorio | Aceptada | Revisión del C4 contra el compose antes de cada tag |
 | [ADR-7](0007-stack-tecnologico.md) | Stack: Node.js 22, Express 5, pg, PostgreSQL 16, React 19 | Aceptada | `package.json` y Dockerfiles |

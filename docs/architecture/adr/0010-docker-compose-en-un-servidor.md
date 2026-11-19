@@ -1,7 +1,7 @@
 # ADR-10: Despliegue con Docker Compose en un solo servidor
 
 - **Estado:** Aceptada
-- **Fecha:** 2026-11-03 (revisada el 2026-11-18: se suma `web`)
+- **Fecha:** 2026-11-03 (revisada el 2026-11-18: se suma `web`) (revisada el 2026-11-19: se suma `pasarela-mock` y las contraseñas pasan a `.env`)
 
 ## Contexto
 
@@ -9,7 +9,9 @@ Un solo servidor de la universidad, sin servicios de nube y con becarios que tie
 
 ## Decisión
 
-Vamos a definir los servicios en Compose y levantarlos con un solo comando, igual en local que en el servidor. Es un solo archivo, `infra/compose/docker-compose.yml`, con `db`, `backend`, `keycloak`, `gateway`, `web` y `swagger-ui`. El servicio `backend-tests` solo existe con el perfil `test`.
+Vamos a definir los servicios en Compose y levantarlos con un solo comando, igual en local que en el servidor. Es un solo archivo, `infra/compose/docker-compose.yml`, con 7 servicios: `db`, `backend`, `keycloak`, `gateway`, `web`, `swagger-ui` y `pasarela-mock`. El servicio `backend-tests` solo existe con el perfil `test`.
+
+Las contraseñas no están escritas en el compose: van en `infra/compose/.env`, que no se versiona. En el repo queda `infra/compose/.env.example` con los valores de desarrollo; si falta el `.env`, compose avisa y no arranca.
 
 ## Alternativas
 
@@ -19,7 +21,7 @@ Vamos a definir los servicios en Compose y levantarlos con un solo comando, igua
 ## Consecuencias
 
 - El entorno local es idéntico al de producción y el onboarding empieza con un comando.
-- **Negativas:** se resignan alta disponibilidad y escalado automático; el servidor es un único punto de falla. Hoy algunas contraseñas de desarrollo están escritas en el compose y hay que pasarlas a `.env`.
+- **Negativas:** se resignan alta disponibilidad y escalado automático; el servidor es un único punto de falla.
 
 ## NFRs
 
@@ -27,4 +29,4 @@ Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-7, que tiene prioridad baja.
 
 ## Confirmación
 
-`docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los seis servicios en una máquina limpia; es el primer paso de la prueba de onboarding (NFR-1).
+Con `infra/compose/.env` copiado de `.env.example`, `docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los siete servicios en una máquina limpia; es el primer paso de la prueba de onboarding (NFR-1).

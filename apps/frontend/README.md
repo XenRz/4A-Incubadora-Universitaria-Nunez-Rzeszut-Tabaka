@@ -28,7 +28,7 @@ El puerto tiene que ser 3000: es el redirect URI del cliente `web-incubadora` en
 ```
 src/
 ├── main.jsx                  # monta React con el router
-├── app/App.jsx               # botón de login/logout y rutas: / y /tiendas/:id
+├── app/App.jsx               # login/logout, enlace "Editar mi tienda" y rutas: /, /tiendas/:id y /mi-tienda
 ├── features/
 │   ├── autenticacion/        # login con Keycloak (Authorization Code + PKCE, sin librerías)
 │   │   ├── pkce.js           #   code_verifier y code_challenge con la Web Crypto API
@@ -37,11 +37,14 @@ src/
 │   │   └── logout.js
 │   └── vitrina/              # lo que ve el usuario
 │       ├── ListaTiendas.jsx  #   GET /tiendas
-│       ├── VistaTienda.jsx   #   GET /tiendas/{id} y /tiendas/{id}/productos
-│       └── CargaProducto.jsx #   POST /tiendas/{id}/productos (solo rol dueno)
+│       ├── FilaTienda.jsx    #   una tienda de la lista, con enlace a /tiendas/:id
+│       ├── VistaTienda.jsx   #   GET /tiendas/{id} y /tiendas/{id}/productos (vista pública, con carrito)
+│       ├── FilaProducto.jsx  #   un producto: nombre, stock, precio y el carrito (maqueta)
+│       ├── TiendaEditable.jsx#   /mi-tienda: GET /mi-tienda y sus productos (solo rol dueno)
+│       └── CargaProducto.jsx #   POST /tiendas/{id}/productos, usado desde /mi-tienda
 └── shared/
-    ├── api-client/api.js     # fetch al gateway con el Bearer token; errores Problem Details
-    └── utils/token.js        # lee el rol del token para mostrar u ocultar la carga
+    ├── api-client/api.js     # fetch al gateway (http://localhost:8000/v1) con el Bearer token; errores Problem Details
+    └── utils/token.js        # lee el rol del token para mostrar u ocultar "Editar mi tienda"
 ```
 
 ## Cómo funciona el login
@@ -53,14 +56,15 @@ src/
 
 El token vence a los 5 minutos y no se renueva: al vencer, hay que iniciar sesión otra vez.
 
-**Importante:** el front oculta el formulario de carga a quien no tiene el rol `dueno`, pero eso es solo comodidad. La seguridad la deciden el gateway (rol) y la API (dueño de la tienda). Por eso una dueña ve el formulario en una tienda ajena y la API le responde 403.
+**Importante:** el front muestra "Editar mi tienda" (`/mi-tienda`, `TiendaEditable.jsx`) solo a quien tiene el rol `dueno`, y ahí solo se cargan productos en la tienda propia. Eso es comodidad, no seguridad: la deciden el gateway (rol) y la API (dueño de la tienda). Por eso el 403 entre tiendas se demuestra desde Swagger UI (`POST /v1/tiendas/1/productos` logueado como `carla`).
+
+**Carrito:** es una maqueta. "Agregar al carrito" en `FilaProducto.jsx` solo muestra el aviso "Carrito en preparación: el checkout está diseñado, pero todavía no está implementado." No llama a la API.
 
 ## Configuración
 
-Hoy las URLs están escritas en el código: Keycloak (`http://localhost:8180/realms/incubadora-universitaria`), el gateway (`http://localhost:8000`) y el redirect URI (`http://localhost:3000/`). Para desplegar en el servidor hay que cambiarlas en `features/autenticacion/*.js` y en `shared/api-client/api.js`. Pendiente: centralizarlas en un `config.js` con variables `VITE_*`.
+Hoy las URLs están escritas en el código: Keycloak (`http://localhost:8180/realms/incubadora-universitaria`), el gateway (`http://localhost:8000/v1`) y el redirect URI (`http://localhost:3000/`). Para desplegar en el servidor hay que cambiarlas en `features/autenticacion/*.js` y en `shared/api-client/api.js`. Pendiente: centralizarlas en un `config.js` con variables `VITE_*`.
 
 ## Pendientes conocidos
 
-- nginx no tiene fallback a `index.html`: recargar en `/tiendas/1` da 404. Hace falta un `nginx.conf` con `try_files $uri /index.html;`.
-- Falta `.dockerignore`: el build copia `node_modules` del host.
+- El carrito y el checkout: hoy son maqueta (ver arriba).
 - `features/vitrina/vitrina.js` quedó de una versión anterior y no se usa.
