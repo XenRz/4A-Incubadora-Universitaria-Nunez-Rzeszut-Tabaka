@@ -131,16 +131,19 @@ p[role='status'] { color: var(--ok); margin: 0; }
   gap: 10px;
 }
 .tiendas li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 .tiendas li:hover { border-color: var(--accent); }
-.tiendas a { font-weight: 600; }
+.tiendas a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  font-weight: 600;
+}
+.tiendas a:hover { text-decoration: none; }
 .tiendas .flecha { color: var(--muted); }
 
 
