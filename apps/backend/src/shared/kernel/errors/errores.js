@@ -21,4 +21,10 @@ export class SinPermiso extends Error {
     this.titulo = titulo;
   }
 }
-
+// esta clase sirve para cuando falla la pasarela de pagos, para que el front pueda mostrar un mensaje adecuado
+export class PasarelaNoDisponible extends Error {
+  constructor(titulo, detalle) {
+    super(detalle);
+    this.titulo = titulo;
+  }
+}

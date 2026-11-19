@@ -45,6 +45,7 @@ services:
         condition: service_healthy   # espera a que Postgres responda, no solo a que arranque
     networks:
       - backend
+      - pagos # agrego pagos para que el backend pueda llamar a la pasarela mockeada
 
   # Tests del backend contra la base real (aislamiento entre tiendas).
   # No arranca con "up": solo existe con el perfil "test". Desde la raíz del repo:
@@ -111,7 +112,13 @@ services:
     build: ../../apps/frontend
     ports:
       - "3000:80"
-
+  # aca va la pasarela de pagos mockeada
+  pasarela-mock:
+    image: wiremock/wiremock:3.13.2 # esta imagen trae el servidor Wiremock listo para usar
+    volumes:
+      - ../mock-pasarela/mappings:/home/wiremock/mappings # volumes para que tome los mappings de la carpeta del repo
+    networks: # networks sirve para que los servicios puedan comunicarse entre sí
+      - pagos
   # Documentación generada a partir del contrato OpenAPI; sabe loguearse contra Keycloak.
   swagger-ui:
     image: swaggerapi/swagger-ui:v5.17.14
@@ -131,3 +138,4 @@ volumes:
 networks:
   backend:
   identidad:
+  pagos: 

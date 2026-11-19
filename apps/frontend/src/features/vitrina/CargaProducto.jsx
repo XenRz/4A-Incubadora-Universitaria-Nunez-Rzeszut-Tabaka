@@ -69,7 +69,7 @@ export default function CargaProducto({ tiendaId, onCreado }) {
   };
 
   return (
-    <form onSubmit={enviar} noValidate style={{ display: 'grid', gap: 12, maxWidth: 360 }}>
+    <form onSubmit={enviar} noValidate className="form-producto">
       <h2>Cargar producto</h2>
 
       <label>
@@ -119,9 +119,9 @@ export default function CargaProducto({ tiendaId, onCreado }) {
         {enviando ? 'Guardando…' : 'Guardar producto'}
       </button>
 
-      {errorApi && <p role="alert" style={{ color: 'crimson' }}>{errorApi}</p>}
+      {errorApi && <p role="alert">{errorApi}</p>}
       {creado && (
-        <p role="status" style={{ color: 'green' }}>
+        <p role="status">
           Producto «{creado.nombre}» creado en {creado.tiendaNombre} (id {creado.id}).
         </p>
       )}

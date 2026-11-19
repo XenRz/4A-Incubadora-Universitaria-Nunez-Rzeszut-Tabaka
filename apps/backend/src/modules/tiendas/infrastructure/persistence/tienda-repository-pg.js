@@ -14,5 +14,11 @@ export function crearTiendaRepositoryPg(pool) {
       const { rows } = await pool.query('SELECT id, nombre, dueno_id FROM tiendas WHERE id = $1', [id]);
       return rows.length ? aTienda(rows[0]) : null;
     },
+
+    // Cada dueño tiene una sola tienda, por eso LIMIT 1.
+    async buscarPorDueno(duenoId) {
+      const { rows } = await pool.query('SELECT id, nombre, dueno_id FROM tiendas WHERE dueno_id = $1 LIMIT 1', [duenoId]);
+      return rows.length ? aTienda(rows[0]) : null;
+    },
   };
 }

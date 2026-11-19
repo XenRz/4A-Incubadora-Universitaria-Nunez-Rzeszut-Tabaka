@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { api } from '../../shared/api-client/api.js'
+import FilaTienda from './FilaTienda.jsx'
 
 function ListaTiendas() {
   const [tiendas, setTiendas] = useState([])
@@ -15,16 +15,14 @@ function ListaTiendas() {
   }, [])
 
   if (cargando) return <p>Cargando tiendas...</p>
-  if (error) return <p>No se pudieron cargar las tiendas: {error}</p>
+  if (error) return <p role="alert">No se pudieron cargar las tiendas: {error}</p>
 
   return (
     <section>
       <h2>Tiendas</h2>
-      <ul>
+      <ul className="tiendas">
         {tiendas.map((tienda) => (
-          <li key={tienda.id}>
-            <Link to={`/tiendas/${tienda.id}`}>{tienda.nombre}</Link>
-          </li>
+          <FilaTienda key={tienda.id} tienda={tienda} />
         ))}
       </ul>
     </section>
