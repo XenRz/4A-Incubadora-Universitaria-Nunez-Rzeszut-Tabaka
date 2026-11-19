@@ -2,18 +2,21 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../../shared/api-client/api.js'
 import CargaProducto from './CargaProducto.jsx'
-import { esDueno } from '../../shared/utils/token.js';
+import { esDueno } from '../../shared/utils/token.js'
+import FilaProducto from './FilaProducto.jsx'
+
 const formatoPrecio = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' })
 
 function VistaTienda() {
   const { id } = useParams()
-  const [resultado, setResultado] = useState({ id: null, productos: [], error: null })
+  const [resultado, setResultado] = useState({ id: null, tienda: null, productos: [], error: null })
   const [mostrarForm, setMostrarForm] = useState(false)
   const [version, setVersion] = useState(0) // al incrementarlo se vuelven a pedir los datos
+
   useEffect(() => {
     let cancelado = false
 
-  Promise.all([
+    Promise.all([
       api.get(`/tiendas/${id}`),
       api.get(`/tiendas/${id}/productos`),
     ])
@@ -24,7 +27,7 @@ function VistaTienda() {
   }, [id, version])
 
   const cargando = resultado.id !== id
-  const { productos, error } = resultado
+  const { tienda, productos, error } = resultado
 
   if (cargando) return <p>Cargando productos...</p>
 
@@ -36,23 +39,27 @@ function VistaTienda() {
       </section>
     )
   }
+
   const puedeAgregar = esDueno()
-  const nombreTienda = productos[0]?.tiendaNombre ?? `Tienda ${id}`
 
   return (
     <section>
       <Link to="/">← Volver a las tiendas</Link>
-      <h2>{nombreTienda}</h2>
+      <h2>{tienda.nombre}</h2>
+
       {puedeAgregar && (
         <>
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
-            <button onClick={() => setMostrarForm((v) => !v)}>
+          <div className="acciones">
+            <button
+              className={mostrarForm ? 'secundario' : ''}
+              onClick={() => setMostrarForm((v) => !v)}
+            >
               {mostrarForm ? 'Cancelar' : 'Agregar producto'}
             </button>
           </div>
 
           {mostrarForm && (
-            <div style={{ display: 'flex', justifyContent: 'center', margin: '16px 0' }}>
+            <div className="acciones">
               <CargaProducto
                 tiendaId={id}
                 onCreado={() => setVersion((v) => v + 1)}
@@ -62,14 +69,12 @@ function VistaTienda() {
         </>
       )}
 
-      {productos.length === 0
+  {productos.length === 0
         ? <p>Esta tienda todavía no tiene productos.</p>
         : (
-          <ul>
+          <ul className="productos">
             {productos.map((producto) => (
-              <li key={producto.id}>
-                {producto.nombre} — {formatoPrecio.format(producto.precio)} (stock: {producto.stock})
-              </li>
+              <FilaProducto key={producto.id} producto={producto} />
             ))}
           </ul>
         )}

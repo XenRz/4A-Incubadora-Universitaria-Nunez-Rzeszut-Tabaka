@@ -24,13 +24,15 @@ function App() {
 
   return (
     <main>
-      <h1>Incubadora Universitaria 4A</h1>
+      <header className="cabecera">
+        <h1>Incubadora Universitaria 4A</h1>
+        {logueado
+          ? <button className="secundario" onClick={logout}>Cerrar sesión</button>
+          : <button onClick={login}>Iniciar sesión</button>}
+      </header>
 
-      {logueado
-        ? <button onClick={logout}>Cerrar sesión</button>
-        : <button onClick={login}>Iniciar sesión</button>}
+      {error && <p role="alert">Error: {error}</p>}
 
-      {error && <p>Error: {error}</p>}
     <Routes>
         <Route path="/" element={<ListaTiendas />} />
         <Route path="/tiendas/:id" element={<VistaTienda />} />
