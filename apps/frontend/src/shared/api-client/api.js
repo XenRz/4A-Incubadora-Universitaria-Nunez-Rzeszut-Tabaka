@@ -1,4 +1,4 @@
-const GATEWAY = 'http://localhost:8000';
+const GATEWAY = 'http://localhost:8000/v1';   
 
 function errorApi(status, titulo, detalle){
     const error = new Error(detalle || titulo || `Error ${status}`);

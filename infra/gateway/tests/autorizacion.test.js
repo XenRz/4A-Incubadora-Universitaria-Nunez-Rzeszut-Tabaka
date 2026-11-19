@@ -28,7 +28,7 @@ async function token({ sub = ANA, roles = ['dueno'], iss = ISSUER, aud = AUDIENC
 }
 
 const escuchar = (app) => new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
-const pedir = (ruta, { metodo = 'GET', tok, headers = {}, cuerpo } = {}) => fetch(base + ruta, {
+const pedir = (ruta, { metodo = 'GET', tok, headers = {}, cuerpo } = {}) => fetch(base + '/v1' + ruta, {   // /v1 es el prefijo de la API publica
   method: metodo,
   headers: { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}), ...headers },
   body: cuerpo ? JSON.stringify(cuerpo) : undefined,
@@ -127,6 +127,11 @@ describe('Pasa y llega el usuario correcto al backend', () => {
 describe('Rutas no declaradas', () => {
   test('una ruta que no está en REGLAS responde 404 y no llega al backend', async () => {
     const resp = await pedir('/admin/secreto', { tok: await token() });
+    assert.equal(resp.status, 404);
+  });
+
+  test('VERSIONADO: sin el prefijo /v1 la ruta no existe (404) y no llega al backend', async () => {
+    const resp = await fetch(base + '/tiendas/2/productos');
     assert.equal(resp.status, 404);
   });
 });

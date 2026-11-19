@@ -6,7 +6,7 @@ info:
     API de la incubadora universitaria 4A para tiendas online para emprendedores. 
     Esta API permite gestionar tiendas y productos. 
 servers:
-  - url: http://localhost:8000
+  - url: http://localhost:8000/v1
     description: Gateway (la API ya no publica su puerto; se entra por acá)
 security:
   - keycloak: [openid]

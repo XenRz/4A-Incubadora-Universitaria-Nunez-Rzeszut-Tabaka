@@ -98,10 +98,12 @@ app.use((req, res, next) => {
   });
 
   // ---------- Todo lo demás: autenticar, autorizar y reenviar a la API ----------
-  app.use(async (req, res) => {
+  // ---------- La API, versión 1: autenticar, autorizar y reenviar ----------
+  // Montado en /v1: adentro, req.path y req.url ya vienen SIN el prefijo (ej: /v1/tiendas → /tiendas).
+  // El backend no sabe de versiones: la versión es parte de la API pública, que es el gateway.
+  async function reenviar(req, res) {
     const regla = REGLAS.find((r) => r.metodo === req.method && r.ruta.test(req.path));
     if (!regla) return problem(res, 404, 'No encontrado', `No hay ruta ${req.method} ${req.path} en el gateway.`, req.originalUrl);
-
     // Headers que se reenvían al backend. Se arman desde cero: nada de lo que mande el cliente pasa directo,
     // así nadie puede inventarse un X-Usuario-Id desde afuera.
     const headers = { 'Content-Type': 'application/json' };
@@ -122,7 +124,7 @@ app.use((req, res, next) => {
     }
 
     try {
-      const resp = await fetch(apiUrl + req.originalUrl, {
+      const resp = await fetch(apiUrl + req.url, {   // req.url: la ruta sin /v1, con la query
         method: req.method,
         headers,
         body: ['POST', 'PUT', 'PATCH'].includes(req.method) ? JSON.stringify(req.body ?? {}) : undefined,
@@ -134,7 +136,13 @@ app.use((req, res, next) => {
       console.error(err.message);
       problem(res, 502, 'API no disponible', `El gateway no pudo comunicarse con ${apiUrl}.`, req.originalUrl);
     }
-  });
+  }
+
+  app.use('/v1', reenviar);          // la API pública, versión 1
+  app.get('/health', reenviar);      // operación: el chequeo de salud no lleva versión
+
+  // Cualquier otra ruta (por ejemplo, sin /v1): no existe
+  app.use((req, res) => problem(res, 404, 'No encontrado', `No hay ruta ${req.method} ${req.path} en el gateway. La API está en /v1.`, req.originalUrl));
 
   return app;
 }
