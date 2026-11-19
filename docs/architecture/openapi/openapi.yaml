@@ -30,6 +30,38 @@ paths:
                 type: array #array de tiendas
                 items:
                   $ref: '#/components/schemas/Tienda' # una tienda
+  /mi-tienda:
+    get:
+      tags: [Tiendas]
+      summary: Obtener la tienda del usuario autenticado
+      operationId: obtenerMiTienda
+      description: |
+        **Rol requerido:** dueno
+
+        Devuelve la tienda cuyo dueño es el usuario del token. Cada dueño tiene una sola tienda.
+      responses:
+        '200':
+          description: La tienda del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tienda'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          description: El usuario no tiene una tienda asignada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: about:blank
+                title: Tienda no encontrada
+                status: 404
+                detail: No tenés una tienda asignada.
+                instance: /mi-tienda
   /tiendas/{id}:
     parameters:
       - name: id
@@ -250,14 +282,14 @@ components:
             detail: 'Falta el header "Authorization: Bearer <token>".'
             instance: /tiendas
     SinPermiso:
-      description: El token es válido pero el rol no alcanza para esta operación (sé quién sos, pero no podés)
-      content:
-        application/problem+json:
-          schema:
-            $ref: '#/components/schemas/ProblemDetails'
-          example:
-            type: about:blank
-            title: Sin permiso
-            status: 403
-            detail: 'comprador tiene los roles comprador y esta operación requiere uno de [dueno].'
-            instance: /tiendas/1/productos
+        description: El token es válido pero el rol no alcanza para esta operación (sé quién sos, pero no podés)
+        content:
+          application/problem+json:
+            schema:
+              $ref: '#/components/schemas/ProblemDetails'
+            example:
+              type: about:blank
+              title: Sin permiso
+              status: 403
+              detail: 'beto tiene los roles [comprador] y esta operación requiere uno de [dueno].'
+              instance: /mi-tienda

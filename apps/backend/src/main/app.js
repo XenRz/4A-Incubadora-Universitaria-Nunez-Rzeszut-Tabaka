@@ -6,6 +6,7 @@ import { crearApp } from './http.js';
 // Módulo tiendas
 import { listarTiendas } from '../modules/tiendas/application/use-cases/listar-tiendas.js';
 import { obtenerTienda } from '../modules/tiendas/application/use-cases/obtener-tienda.js';
+import { obtenerMiTienda } from '../modules/tiendas/application/use-cases/obtener-mi-tienda.js';
 import { crearTiendasRouter } from '../modules/tiendas/presentation/http/tiendas-router.js';
 import { crearTiendasPublicApi } from '../modules/tiendas/public-api/index.js';
 
@@ -26,6 +27,7 @@ export function crearBackend({ tiendaRepository, productoRepository, verificarBa
   const tiendasRouter = crearTiendasRouter({
     listarTiendas: listarTiendas({ tiendaRepository }),
     obtenerTienda: obtenerTienda({ tiendaRepository }),
+    obtenerMiTienda: obtenerMiTienda({ tiendaRepository }),
   });
   const tiendasApi = crearTiendasPublicApi({ tiendaRepository });
 
