@@ -1,4 +1,4 @@
-# ADR-7: Stack tecnológico
+# ADR-8: Stack tecnológico
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-11-13 (revisada el 2026-11-18: se suma el front)
@@ -10,7 +10,7 @@ Sin Laravel ni frameworks similares. Tiene que ser un lenguaje que un becario pr
 ## Decisión
 
 - **Back-end y gateway:** Node.js 22 con Express 5 como router mínimo. El backend usa el driver `pg` con SQL parametrizado escrito a mano; el gateway suma `jose` para validar JWT.
-- **Base:** PostgreSQL 16, que permite Row-Level Security como refuerzo del ADR-2.
+- **Base:** PostgreSQL 16, que permite Row-Level Security como refuerzo del ADR-4.
 - **Front:** React 19 con Vite 8 y react-router 7, compilado a archivos estáticos que sirve nginx. El login con PKCE se escribe a mano con la Web Crypto API del navegador, sin librería OIDC.
 - **Imágenes:** `node:22-alpine`, `postgres:16-alpine` y `nginx:alpine`.
 

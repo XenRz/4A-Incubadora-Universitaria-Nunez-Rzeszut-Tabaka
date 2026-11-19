@@ -1,11 +1,11 @@
-# ADR-11: Identidad con Keycloak y gateway como única entrada a la API
+# ADR-5: Identidad con Keycloak y gateway como única entrada a la API
 
-- **Estado:** Aceptada. Reemplaza a [ADR-3](0003-autenticacion-propia-con-sesion.md).
+- **Estado:** Aceptada
 - **Fecha:** 2026-11-03 (revisada el 2026-11-18: se suma el cliente del front)
 
 ## Contexto
 
-La Clase 11 presentó OIDC con Keycloak y un gateway delante de la API. El equipo lo adoptó en lugar de la autenticación propia del ADR-3. La seguridad general (NFR-4) es prioridad alta, y los becarios que rotan no deberían mantener hashing, vencimientos ni CSRF.
+La Clase 11 presentó OIDC con Keycloak y un gateway delante de la API. El equipo lo adoptó en lugar de una autenticación propia. La seguridad general (NFR-4) es prioridad alta, y los becarios que rotan no deberían mantener hashing, vencimientos ni CSRF.
 
 ## Decisión
 
@@ -19,7 +19,7 @@ La Clase 11 presentó OIDC con Keycloak y un gateway delante de la API. El equip
 
 ## Alternativas
 
-- **Autenticación propia con sesión en el servidor** (ADR-3): una pieza menos, pero el hashing, la expiración, CSRF y la revocación quedan a cargo de becarios que rotan.
+- **Autenticación propia con sesión en el servidor**: una pieza menos, pero el hashing, la expiración, CSRF y la revocación quedan a cargo de becarios que rotan.
 - **Validar el token dentro de la API:** ahorra un contenedor, pero mezcla seguridad con negocio.
 - **Guardar el token solo en memoria** en el front: más resistente a XSS, pero se pierde con cada recarga de página.
 

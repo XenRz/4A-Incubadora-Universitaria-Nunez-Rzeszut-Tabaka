@@ -1,4 +1,4 @@
-# ADR-4: Pasarela de pagos detrás de un puerto, con implementación simulada
+# ADR-6: Pasarela de pagos detrás de un puerto, con implementación simulada
 
 - **Estado:** Aceptada; puerto, adaptador HTTP y mock implementados, sin caso de uso que los use (el checkout de `pedidos` está diseñado, no implementado)
 - **Fecha:** 2026-11-03 (revisada el 2026-11-19: el mock pasa a ser un contenedor WireMock y el adaptador habla HTTP)

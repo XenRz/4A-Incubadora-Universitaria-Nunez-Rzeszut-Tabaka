@@ -1,6 +1,6 @@
 # Módulo `pagos`
 
-**Estado:** puerto, adaptador HTTP (`pasarela-pagos-http.js`) y public-api implementados; el mock es el contenedor `pasarela-mock` (WireMock). Todavía no hay caso de uso ni ruta que llamen a `cobrar`: lo va a usar el checkout de `pedidos` (ADR-4).
+**Estado:** puerto, adaptador HTTP (`pasarela-pagos-http.js`) y public-api implementados; el mock es el contenedor `pasarela-mock` (WireMock). Todavía no hay caso de uso ni ruta que llamen a `cobrar`: lo va a usar el checkout de `pedidos` (ADR-6).
 
 **Responsabilidad:** procesar pagos. Define el puerto `PasarelaPagos` en `application/ports/pasarela-pagos.js`; el adaptador HTTP en `infrastructure/external/pasarela-pagos-http.js` habla con la pasarela (hoy el mock), con timeout de 5 s y error `PasarelaNoDisponible` (502) si no responde.
 

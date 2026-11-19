@@ -1,4 +1,4 @@
-# ADR-10: Despliegue con Docker Compose en un solo servidor
+# ADR-3: Despliegue con Docker Compose en un solo servidor
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-11-03 (revisada el 2026-11-18: se suma `web`) (revisada el 2026-11-19: se suma `pasarela-mock`)
@@ -29,4 +29,4 @@ Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-7, que tiene prioridad baja.
 
 ## Confirmación
 
-`docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los siete servicios en una máquina limpia; es el primer paso de la prueba de onboarding (NFR-1).
+`docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los siete servicios en una máquina limpia.

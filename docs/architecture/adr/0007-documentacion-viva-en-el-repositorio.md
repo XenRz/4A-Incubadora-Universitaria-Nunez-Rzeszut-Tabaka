@@ -1,4 +1,4 @@
-# ADR-6: Documentación viva en el repositorio
+# ADR-7: Documentación viva en el repositorio
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-11-03

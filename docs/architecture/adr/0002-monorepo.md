@@ -1,4 +1,4 @@
-# ADR-9: Monorepo con front y back
+# ADR-2: Monorepo con front y back
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-11-03 (revisada el 2026-11-19: se quita el módulo `identidad` de la lista, ver ADR-1)

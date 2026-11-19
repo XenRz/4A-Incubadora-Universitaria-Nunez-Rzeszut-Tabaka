@@ -7,10 +7,10 @@ Plataforma multi-tienda para los emprendedores de una incubadora universitaria. 
 ## Arquitectura en una mirada
 
 - **Monolito modular** (ADR-1): un solo backend dividido en módulos de negocio.
-- **Una base PostgreSQL con aislamiento por tienda** (ADR-2): toda tabla de tienda lleva `tienda_id`, y la API verifica que el usuario sea el dueño.
-- **Keycloak + gateway** (ADR-11): Keycloak autentica (OIDC) y el gateway es la única entrada a la API. No hay sesión propia.
-- **Front propio en React** (ADR-8), servido como archivos estáticos por nginx.
-- **Todo en Docker Compose** (ADR-10), con un solo comando.
+- **Una base PostgreSQL con aislamiento por tienda** (ADR-4): toda tabla de tienda lleva `tienda_id`, y la API verifica que el usuario sea el dueño.
+- **Keycloak + gateway** (ADR-5): Keycloak autentica (OIDC) y el gateway es la única entrada a la API. No hay sesión propia.
+- **Front propio en React** (ADR-9), servido como archivos estáticos por nginx.
+- **Todo en Docker Compose** (ADR-3), con un solo comando.
 
 | Contenedor | Qué es | Puerto en el host |
 |---|---|---|
@@ -57,7 +57,7 @@ Los importa Keycloak desde `infra/keycloak/realm-incubadora.json`. Las contrase�
 
 | Usuario | Contraseña | Rol | Tienda | Para probar |
 |---|---|---|---|---|
-| `admin` | `admin123` | admin | — | Login de administrador (alta de tiendas y estadísticas: diseñadas, sin implementar) |
+| `admin` | `admin123` | admin | — | Login de administrador (alta de tiendas: diseñada, sin implementar) |
 | `ana` | `ana123` | dueno | Tienda de mates Unahur (id 1) | Carga de producto en su tienda |
 | `carla` | `carla123` | dueno | Repostería (id 2) | Que **no** puede cargar productos en la tienda de ana (403) |
 | `beto` | `beto123` | comprador | — | Catálogo de cualquier tienda; no ve el formulario de carga |
@@ -104,7 +104,7 @@ docker compose -f infra/compose/docker-compose.yml exec backend node -e "fetch('
 └── README.md
 ```
 
-De los cuatro módulos del backend, `tiendas` y `catalogo` tienen código completo; `pagos` tiene el puerto, el adaptador HTTP y la public-api, pero ningún caso de uso los llama todavía; `pedidos` tiene la estructura de capas y un README con su responsabilidad. No hay módulo `identidad`: el login y los roles los resuelve Keycloak, y la API recibe el usuario en `X-Usuario-Id` (ADR-11).
+De los cuatro módulos del backend, `tiendas` y `catalogo` tienen código completo; `pagos` tiene el puerto, el adaptador HTTP y la public-api, pero ningún caso de uso los llama todavía; `pedidos` tiene la estructura de capas y un README con su responsabilidad. No hay módulo `identidad`: el login y los roles los resuelve Keycloak, y la API recibe el usuario en `X-Usuario-Id` (ADR-5).
 
 ### Reglas del backend
 
@@ -139,9 +139,9 @@ docker compose -f infra/compose/docker-compose.yml --profile test run --rm --bui
 | Suite | Qué verifica | NFR |
 |---|---|---|
 | `tests/architecture` | Capas y comunicación solo por `public-api` | NFR-1 (ADR-1) |
-| `tests/integration` | Una dueña no escribe en otra tienda; cada catálogo muestra solo lo suyo (en memoria y en PostgreSQL) | NFR-3 (ADR-2) |
+| `tests/integration` | Una dueña no escribe en otra tienda; cada catálogo muestra solo lo suyo (en memoria y en PostgreSQL) | NFR-3 (ADR-4) |
 | `tests/unit` | Reglas del producto y orden de validaciones del alta | NFR-3 |
-| `infra/gateway/tests` | 401 sin token, con firma ajena, emisor o audiencia equivocados o vencido; 403 por rol; `X-Usuario-Id` inventado se descarta | NFR-4 (ADR-11) |
+| `infra/gateway/tests` | 401 sin token, con firma ajena, emisor o audiencia equivocados o vencido; 403 por rol; `X-Usuario-Id` inventado se descarta | NFR-4 (ADR-5) |
 
 ## Dependencias y licencias (NFR-2: costo cero)
 
@@ -196,6 +196,6 @@ Todo es software libre y corre en el servidor de la universidad, sin servicios p
 - Contraseñas de desarrollo de `db` y de la consola de Keycloak escritas en el compose, para levantar con un solo comando. En el servidor real hay que pasarlas a un `.env` fuera del repo.
 - Falta el simulacro de restauración (NFR-5) y la prueba de carga del catálogo (NFR-6); hoy se sostienen con argumentos (ver el documento de arquitectura, sección 13).
 - Keycloak corre en modo desarrollo (sin HTTPS ni base propia); en el servidor hace falta `start` con HTTPS.
-- Funcionalidades del administrador y pedidos: diseñadas (ADR-5), sin implementar.
-- Conectar `pedidos` con `pagos` (checkout): el puerto, el adaptador y el mock de la pasarela existen (ADR-4), pero ningún caso de uso llama a `cobrar`.
+- Funcionalidades del administrador y pedidos: diseñadas, sin implementar.
+- Conectar `pedidos` con `pagos` (checkout): el puerto, el adaptador y el mock de la pasarela existen (ADR-6), pero ningún caso de uso llama a `cobrar`.
 - El carrito del front es maqueta: "Agregar al carrito" solo muestra un aviso de que el checkout no está implementado.

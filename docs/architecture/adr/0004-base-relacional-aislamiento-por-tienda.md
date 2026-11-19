@@ -1,4 +1,4 @@
-# ADR-2: Una base relacional con aislamiento por tienda
+# ADR-4: Una base relacional con aislamiento por tienda
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-11-03 (revisada el 2026-11-13: la tienda viaja en la URL y la API verifica al dueño)
@@ -12,8 +12,8 @@ La regla central del dominio es el aislamiento total entre tiendas (NFR-3). Con 
 Vamos a usar una única base PostgreSQL con tablas compartidas: cada tabla que pertenece a una tienda lleva `tienda_id NOT NULL`.
 
 - La tienda viaja en la URL (`/tiendas/{id}/...`).
-- En las escrituras, la API verifica que el usuario del token (`X-Usuario-Id`, que arma el gateway, ADR-11) sea el dueño de esa tienda, a través de la `public-api` del módulo `tiendas`.
-- El filtro por tienda se aplica en la capa de repositorios: no existe un método "listar todos" fuera del módulo de estadísticas del administrador (ADR-5).
+- En las escrituras, la API verifica que el usuario del token (`X-Usuario-Id`, que arma el gateway, ADR-5) sea el dueño de esa tienda, a través de la `public-api` del módulo `tiendas`.
+- El filtro por tienda se aplica en la capa de repositorios: no existe un método "listar todos".
 
 ## Alternativas
 

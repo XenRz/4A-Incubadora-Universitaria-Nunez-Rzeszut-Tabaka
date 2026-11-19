@@ -9,9 +9,9 @@
 
 ## Decisión
 
-Vamos a construir una sola aplicación desplegable (`apps/backend`), dividida en módulos internos por contexto de negocio: `tiendas`, `catalogo`, `pedidos` y `pagos` (las estadísticas del administrador se suman como módulo de solo lectura, ADR-5).
+Vamos a construir una sola aplicación desplegable (`apps/backend`), dividida en módulos internos por contexto de negocio: `tiendas`, `catalogo`, `pedidos` y `pagos`.
 
-El módulo `identidad` se eliminó: el login y los roles los resuelve Keycloak (ADR-11), y la API recibe el usuario ya validado por el gateway en el header `X-Usuario-Id`.
+El módulo `identidad` se eliminó: el login y los roles los resuelve Keycloak (ADR-5), y la API recibe el usuario ya validado por el gateway en el header `X-Usuario-Id`.
 
 Cada módulo tiene las mismas capas (`domain`, `application`, `infrastructure`, `presentation`, `public-api`) y solo se comunica con otro a través de su `public-api`. `src/main/` es el único lugar que conoce todas las piezas.
 

@@ -1,6 +1,6 @@
 # Front · `web`
 
-Front propio de la plataforma (ADR-8): una SPA en React 19 + Vite 8 + react-router 7. Se compila a archivos estáticos que sirve nginx en el contenedor `web` (puerto 3000). No tiene lógica de negocio ni secretos: el navegador habla directo con Keycloak para el login y con el gateway para la API.
+Front propio de la plataforma (ADR-9): una SPA en React 19 + Vite 8 + react-router 7. Se compila a archivos estáticos que sirve nginx en el contenedor `web` (puerto 3000). No tiene lógica de negocio ni secretos: el navegador habla directo con Keycloak para el login y con el gateway para la API.
 
 ## Cómo levantarlo
 

@@ -1,6 +1,6 @@
 # Documento de Arquitectura – 4A Incubadora universitaria
 
-19 de noviembre de 2026 · Núñez, Rzeszut, Tabaka
+Ariel Núñez, Ignacio Rzeszut, Luca Tabaka.
 
 ## 1. Dominio y escenario
 
@@ -36,12 +36,12 @@ Hay tres roles y un único sistema externo: la pasarela de pagos, que se simula.
 
 **Corte a implementar:**
 
-- [ ] Login con los tres roles — implementado: Keycloak autentica a `admin` (rol `admin`), a las dueñas `ana` y `carla` (rol `dueno`) y al comprador `beto` (rol `comprador`), desde el front `web` o desde Swagger UI. El administrador inicia sesión, pero sus funcionalidades (alta de tiendas y estadísticas) están diseñadas y sin implementar
+- [ ] Login con los tres roles — implementado: Keycloak autentica a `admin` (rol `admin`), a las dueñas `ana` y `carla` (rol `dueno`) y al comprador `beto` (rol `comprador`), desde el front `web` o desde Swagger UI. El administrador inicia sesión, pero sus funcionalidades (alta de tiendas) están diseñadas y sin implementar
 - [ ] Carga de producto por el dueño — implementado: vista «Editar mi tienda» en el front (`GET /v1/mi-tienda`) y `POST /v1/tiendas/{id}/productos`; el gateway exige el rol `dueno` y la API verifica que el usuario sea el dueño de esa tienda
 - [ ] Visualización del catálogo por el comprador — implementado: lista de tiendas y catálogo en el front, sobre `GET /v1/tiendas` y `GET /v1/tiendas/{id}/productos`, rutas públicas
 - [ ] Verificación de que una tienda no ve los productos de otra — implementado y cubierto por tests de acceso cruzado (sección 13). El front solo ofrece cargar productos en la tienda propia; el 403 ante una tienda ajena se muestra desde Swagger UI, con `carla` intentando crear en la tienda de `ana`
 
-Quedan diseñados pero no implementados el checkout (módulo `pedidos`) y las estadísticas del administrador. La pasarela de pagos simulada ya existe (puerto, adaptador HTTP y un contenedor WireMock), pero ningún caso de uso la llama todavía: la conecta el checkout. El carrito del front es una maqueta que avisa que el checkout no está implementado.
+Queda diseñado pero no implementado el checkout (módulo `pedidos`). Las estadísticas del administrador quedan solo como parte del escenario: no están diseñadas. La pasarela de pagos simulada ya existe (puerto, adaptador HTTP y un contenedor WireMock), pero ningún caso de uso la llama todavía: la conecta el checkout. El carrito del front es una maqueta que avisa que el checkout no está implementado.
 
 ## 3. Requerimientos no funcionales
 
@@ -49,14 +49,14 @@ Mantenibilidad y costo mandan sobre todo lo demás: cuando un atributo compite c
 
 | ID | Atributo | Prioridad | Escenario | Verificación |
 | --- | --- | --- | --- | --- |
-| NFR-1 | Mantenibilidad (comprensibilidad) | Estrella | Cuando un becario nuevo, sin conocimiento previo del sistema, hace el alta de un campo nuevo en Producto sobre el módulo catálogo, el front y la documentación (README, C4 y ADRs) en desarrollo, durante su primera semana con el equipo renovado, el sistema queda levantado en local con el campo funcionando y los tests en verde, medido como menos de 5 días hábiles desde que clona el repositorio. | Prueba de onboarding y test de arquitectura |
+| NFR-1 | Mantenibilidad (comprensibilidad) | Estrella | Cuando un becario nuevo, sin conocimiento previo del sistema, hace el alta de un campo nuevo en Producto sobre el módulo catálogo, el front y la documentación (README, C4 y ADRs) en desarrollo, durante su primera semana con el equipo renovado, el sistema queda levantado en local con el campo funcionando y los tests en verde, medido como menos de 5 días hábiles desde que clona el repositorio. | Test de arquitectura |
 | NFR-2 | Costo | Estrella | Cuando los becarios hacen el despliegue y la operación de un mes sobre todo el sistema en producción, en el servidor de la universidad, el sistema funciona solo con software libre y sin servicios pagos de nube, medido como costo mensual adicional igual a cero y ninguna licencia paga. | Inventario de dependencias y licencias en el README |
 | NFR-3 | Seguridad y aislamiento entre tiendas | Alta | Cuando la dueña autenticada de una tienda hace el alta de un producto en una tienda ajena sobre el gateway y el módulo catálogo en operación normal, el sistema rechaza el pedido con 403 en formato Problem Details sin guardar nada, y el catálogo de cada tienda sigue mostrando solo sus productos, medido como 0 escrituras cruzadas en la suite de acceso cruzado, en memoria y contra PostgreSQL. | Tests de acceso cruzado del backend |
 | NFR-4 | Seguridad general | Alta | Cuando un cliente o un atacante hace una petición a una ruta protegida sin token, con un token adulterado, vencido o emitido para otra audiencia, o con un rol insuficiente, sobre el gateway en operación normal, el sistema la rechaza en el gateway antes de que llegue a la API, con 401 y `WWW-Authenticate` o con 403, medido como el 100% de los casos de la suite del gateway rechazados. | Tests de autorización del gateway |
 | NFR-5 | Operabilidad | Media | Cuando un becario hace la restauración de la base desde un backup, siguiendo solo el README, sobre la base de datos y el compose en un servidor que perdió sus datos, el sistema vuelve a funcionar con los datos del backup y logs legibles con `docker compose logs`, medido como menos de 3 horas y sin ayuda externa. | Simulacro de restauración; hoy, argumento |
 | NFR-6 | Rendimiento | Media | Cuando los compradores hacen consultas al catálogo de una tienda sobre el gateway, la API y la base en tráfico bajo y parejo, con 30 tiendas de 50 productos cada una, el sistema devuelve el catálogo de esa tienda, medido como menos de 1 segundo en el percentil 95. | Prueba de carga; hoy, argumento de volumen |
 | NFR-7 | Disponibilidad | Baja | Cuando una falla hace la caída del servidor o de un servicio sobre el sistema completo en operación normal, sin alta disponibilidad ni failover, el sistema se restablece a mano con Docker Compose y, si hace falta, desde el último backup, medido como menos de 4 horas sin servicio y una pérdida máxima de 24 horas de datos (backup diario). | Política de backup documentada; hoy, argumento |
-| NFR-8 | Escalabilidad | Baja | Restricción declarada, no escenario: el sistema no se diseña para crecer más allá de la escala del escenario (30 tiendas de unos 50 productos cada una). Si la demanda la supera, se rediseña. | Cumplido por decisión (ADR-1 y ADR-10) |
+| NFR-8 | Escalabilidad | Baja | Restricción declarada, no escenario: el sistema no se diseña para crecer más allá de la escala del escenario (30 tiendas de unos 50 productos cada una). Si la demanda la supera, se rediseña. | Cumplido por decisión (ADR-1 y ADR-3) |
 
 **Compromisos asumidos:** se renuncia a escalabilidad horizontal y alta disponibilidad a cambio de simplicidad y costo cero adicional. Treinta tiendas con tráfico bajo no justifican microservicios, colas ni cachés distribuidas, y cada pieza extra encarece entender el sistema en una semana.
 
@@ -80,7 +80,7 @@ Los siete NFR con escenario, desarmados en las seis partes de la Clase 13 (Bass,
 
 El onboarding es el único escenario (A, A): es la restricción que define el escenario 4A, y Keycloak lo vuelve más difícil. Aislamiento y autenticación son (A, M). Estos tres son los que recorre la evaluación de la sección 12; la dificultad es la estimación del equipo.
 
-## 4. Restricciones, supuestos y riesgos
+## 4. Restricciones
 
 La restricción dominante es humana, no técnica: el equipo rota cada año, así que la arquitectura se juzga por lo rápido que alguien nuevo la entiende.
 
@@ -89,14 +89,6 @@ La restricción dominante es humana, no técnica: el equipo rota cada año, así
 | Restricción | Un solo servidor de la universidad | Una unidad de despliegue; base de datos y aplicación en la misma máquina |
 | Restricción | 2 becarios que cambian cada año | Tecnologías comunes y documentadas; evitar patrones sofisticados |
 | Restricción | Sin frameworks tipo Laravel | Estructura propia, simple y explícita, con librerías chicas y acotadas |
-| Supuesto | Tráfico bajo y parejo, sin picos | No se dimensiona para picos ni se agrega caché distribuida |
-| Supuesto | La pasarela de pagos real no se integra en esta etapa | Se simula detrás de una interfaz reemplazable |
-| Riesgo | Se pierde conocimiento cuando egresan los becarios | Documentación viva (este documento, C4, ADRs) y prueba de onboarding anual |
-| Riesgo | Fuga de datos entre tiendas por un error de filtrado | El filtro por tienda se aplica en un solo punto central, con tests de acceso cruzado |
-| Riesgo | Servidor único como punto de falla | Backup diario y procedimiento de restauración probado |
-| Riesgo | Keycloak y el gateway suman dos piezas que operar y entender | Realm versionado en el repo y reglas de rol en una sola tabla del gateway (ADR-11) |
-| Riesgo | La tienda del alta de producto llega en la URL: un dueño podría apuntar a la tienda de otro | La API verifica que el usuario del token sea el dueño de esa tienda; lo cubren los tests de acceso cruzado (sección 13) |
-| Riesgo | El front guarda el access token en sessionStorage, donde un XSS podría leerlo | Token de 5 minutos, React escapa el contenido y el front no usa HTML sin escapar (ADR-11) |
 
 ## 5. Estilo arquitectónico: matriz de Pugh
 
@@ -113,8 +105,6 @@ Datum: monolito en capas. Escala: +1 mejor que el datum · 0 igual · −1 peor.
 | Mantenibilidad (NFR-1) | 0 | +1 | −1 | −1 |
 | **Total** | **0** | **+1** | **−3** | **−3** |
 
-Propuesta para reforzar la matriz antes de la entrega: ponderar ×2 los criterios de los NFR estrella (costo y mantenibilidad). Así el resultado no depende de que todos los criterios pesen igual. Con esa ponderación el monolito modular queda en +2 y microservicios en −5.
-
 ## 6. C4 nivel 1: Contexto
 
 La plataforma se relaciona con tres tipos de usuario y con un único sistema externo: la pasarela de pagos, simulada en esta etapa.
@@ -125,11 +115,11 @@ Los tres roles usan la misma plataforma por HTTPS; la línea punteada de la pasa
 
 ## 7. C4 nivel 2: Contenedores
 
-Son siete contenedores en un solo servidor, definidos en `infra/compose/docker-compose.yml`: `web`, el front propio en React servido por nginx; `gateway`, única entrada a la API, que valida el token, aplica las reglas por rol y le pasa a la API el usuario en `X-Usuario-Id`; `keycloak`, el proveedor de identidad OIDC; `backend`, el monolito modular en Node.js; `db`, PostgreSQL 16; `swagger-ui`, cliente de prueba que publica el contrato OpenAPI; y `pasarela-mock`, un WireMock que simula la pasarela de pagos externa (ADR-4).
+Son siete contenedores en un solo servidor, definidos en `infra/compose/docker-compose.yml`: `web`, el front propio en React servido por nginx; `gateway`, única entrada a la API, que valida el token, aplica las reglas por rol y le pasa a la API el usuario en `X-Usuario-Id`; `keycloak`, el proveedor de identidad OIDC; `backend`, el monolito modular en Node.js; `db`, PostgreSQL 16; `swagger-ui`, cliente de prueba que publica el contrato OpenAPI; y `pasarela-mock`, un WireMock que simula la pasarela de pagos externa (ADR-6).
 
 ![C4 nivel 2 · contenedores · 7 contenedores en 1 servidor](c4/c4-nivel-2-contenedores.png)
 
-El recuadro punteado es el servidor de la universidad. `backend` y `db` no publican puertos: solo se alcanzan por la red interna `backend`. `gateway` está en `backend` y en `identidad`, la red donde vive `keycloak`. `pasarela-mock` tampoco publica puertos: solo la ve `backend`, por la red `pagos`. La línea punteada entre ellos indica que el adaptador existe pero ningún caso de uso lo llama todavía. `web` no reenvía llamadas: entrega los archivos estáticos y después el navegador habla directo con `keycloak` (login) y con `gateway` (API), que acepta por CORS solo los orígenes de `web` y `swagger-ui` (ADR-8).
+El recuadro punteado es el servidor de la universidad. `backend` y `db` no publican puertos: solo se alcanzan por la red interna `backend`. `gateway` está en `backend` y en `identidad`, la red donde vive `keycloak`. `pasarela-mock` tampoco publica puertos: solo la ve `backend`, por la red `pagos`. La línea punteada entre ellos indica que el adaptador existe pero ningún caso de uso lo llama todavía. `web` no reenvía llamadas: entrega los archivos estáticos y después el navegador habla directo con `keycloak` (login) y con `gateway` (API), que acepta por CORS solo los orígenes de `web` y `swagger-ui` (ADR-9).
 
 Pregunta abierta resuelta: el borrador en draw.io separaba una app para cliente y vendedor y otra para el administrador. Quedó un solo front con vistas por rol, porque es una pieza menos que entender y desplegar (NFR-1); las vistas del administrador todavía no están implementadas.
 
@@ -150,7 +140,7 @@ La **Tienda** es la raíz del aislamiento: todo lo que pertenece a una tienda ll
 
 1. `store_id NOT NULL` en productos y pedidos (en la base implementada, tienda\_id); el dueño de cada tienda queda en tiendas.dueno\_id.
 2. Claves foráneas compuestas `(store_id, id)`: un ítem de un pedido de la tienda A no puede referenciar un producto de la tienda B, lo impide la base.
-3. Los repositorios reciben `store_id` como parámetro obligatorio; no existe un método "listar todos" fuera del módulo de estadísticas del administrador.
+3. Los repositorios reciben `store_id` como parámetro obligatorio; no existe un método "listar todos".
 
 Pregunta abierta: ¿el comprador tiene una cuenta única para toda la plataforma o una por tienda? Una cuenta única es más simple para el usuario; el aislamiento no cambia porque los pedidos ya llevan `store_id`.
 
@@ -172,9 +162,6 @@ La API es REST y se consume solo a través del gateway, en `http://localhost:800
 | GET /mi-tienda | dueno | Devuelve la tienda del usuario del token; la usa la vista «Editar mi tienda» | Implementado |
 | POST /tiendas | admin | Da de alta una tienda | Regla en el gateway; falta contrato y API |
 | DELETE /tiendas/{id} | admin | Da de baja una tienda | Regla en el gateway; falta contrato y API |
-| POST /pedidos | comprador | Crea un pedido en una tienda | Diseñado |
-| POST /pedidos/{id}/pagos | comprador | Pide el cobro a la pasarela simulada | Diseñado; la pasarela simulada ya responde |
-| GET /estadisticas | admin | Estadísticas agregadas de todas las tiendas | Diseñado |
 
 **Convenciones:**
 
@@ -182,7 +169,7 @@ La API es REST y se consume solo a través del gateway, en `http://localhost:800
 - Un dueño que intenta escribir en una tienda ajena recibe 403 (NFR-3). El diseño original proponía 404 para no revelar que la tienda existe, pero las tiendas son públicas: la lista y los catálogos se leen sin login, así que un 404 no ocultaría nada y confundiría al dueño.
 - 401 sin token válido, con el header `WWW-Authenticate: Bearer`; 403 cuando el rol no alcanza; 400 para errores de validación y para JSON mal formado (el diseño original proponía 422).
 - Cada petición protegida lleva `Authorization: Bearer <access token>`. El gateway verifica la firma con las claves públicas de Keycloak (JWKS), el emisor, la audiencia `api-incubadora` y el vencimiento. Sin cookies no aplica CSRF. El gateway acepta por CORS una lista de orígenes (`CORS_ORIGIN`): hoy `web` (`:3000`) y Swagger UI (`:8080`). La API todavía responde CORS con `*`, aunque solo la llama el gateway.
-- El front guarda el access token en `sessionStorage`: se borra al cerrar la pestaña, pero un XSS podría leerlo. Se acepta porque el token vence a los 5 minutos y React escapa el contenido que muestra (ADR-11).
+- El front guarda el access token en `sessionStorage`: se borra al cerrar la pestaña, pero un XSS podría leerlo. Se acepta porque el token vence a los 5 minutos y React escapa el contenido que muestra (ADR-5).
 
 ## 10. Despliegue
 
@@ -199,7 +186,7 @@ Todo se levanta con un solo comando: `docker compose -f infra/compose/docker-com
 | pasarela-mock | WireMock 3.13.2 con dos escenarios de cobro (aprobado, y rechazado si el monto supera 100.000), versionados en infra/pasarela-mock/mappings | Solo red pagos | No |
 | backend-tests | Solo con el perfil `test`: la imagen del backend más `tests/`, contra `db` | Solo red backend | No |
 
-La pasarela de pagos simulada corre en su propio contenedor, `pasarela-mock` (WireMock), y no dentro de `backend`. El backend tiene el puerto `PasarelaPagos` y un adaptador HTTP con timeout de 5 segundos: si la pasarela no responde, la API devuelve 502 con Problem Details. Ningún caso de uso lo llama todavía: lo va a conectar el checkout de `pedidos`. Pasar a un proveedor real es cambiar la URL del adaptador (ADR-4).
+La pasarela de pagos simulada corre en su propio contenedor, `pasarela-mock` (WireMock), y no dentro de `backend`. El backend tiene el puerto `PasarelaPagos` y un adaptador HTTP con timeout de 5 segundos: si la pasarela no responde, la API devuelve 502 con Problem Details. Ningún caso de uso lo llama todavía: lo va a conectar el checkout de `pedidos`. Pasar a un proveedor real es cambiar la URL del adaptador (ADR-6).
 
 **Operación (NFR-5 y NFR-7):**
 
@@ -211,130 +198,351 @@ La pasarela de pagos simulada corre en su propio contenedor, `pasarela-mock` (Wi
 
 ## 11. Decisiones de arquitectura (ADRs)
 
-Hay 11 ADRs: 10 aceptados y 1 reemplazado (ADR-3, por ADR-11). De los aceptados, ADR-5 todavía no tiene código y ADR-4 está implementado pero sin un caso de uso que lo use. Cada uno sigue el formato de la cátedra y tiene su archivo en `docs/architecture/adr/` (ADR-6), con un `README.md` de índice. ADR-7, 8, 10 y 11 se revisaron el 18/11, cuando se sumó el front; ADR-1, 4, 8, 9 y 10, el 19/11, con los cambios de la rama `dev`.
+Cada ADR vive en `docs/architecture/adr/` y esta sección se genera a partir de esos archivos con `node docs/architecture/generar-adrs.mjs`. Para cambiar un ADR se edita su archivo, no este documento. Si se edita aquí, hay que llevar el cambio al archivo del ADR.
+
+<!-- ADRS:INICIO (generado por generar-adrs.mjs, no editar a mano) -->
 
 | ADR | Decisión | Estado |
 | --- | --- | --- |
 | ADR-1 | Monolito modular | Aceptada |
-| ADR-2 | Una base relacional con aislamiento por `store_id` | Aceptada |
-| ADR-3 | Autenticación propia con sesión en el servidor | Reemplazada por ADR-11 |
-| ADR-4 | Pasarela de pagos detrás de un puerto, con implementación simulada | Aceptada; implementada sin caso de uso |
-| ADR-5 | Estadísticas con consultas sobre la misma base | Aceptada |
-| ADR-6 | Documentación viva en el repositorio | Aceptada |
-| ADR-7 | Stack: Node.js 22, Express 5, pg, PostgreSQL 16 y React 19 | Aceptada |
-| ADR-8 | Front propio como SPA estática; el gateway es la única entrada a la API | Aceptada |
-| ADR-9 | Monorepo con front y back | Aceptada |
-| ADR-10 | Despliegue con Docker Compose en un solo servidor | Aceptada |
-| ADR-11 | Identidad con Keycloak y gateway como única entrada | Aceptada |
+| ADR-2 | Monorepo con front y back | Aceptada |
+| ADR-3 | Despliegue con Docker Compose en un solo servidor | Aceptada |
+| ADR-4 | Una base relacional con aislamiento por tienda | Aceptada |
+| ADR-5 | Identidad con Keycloak y gateway como única entrada a la API | Aceptada |
+| ADR-6 | Pasarela de pagos detrás de un puerto, con implementación simulada | Aceptada |
+| ADR-7 | Documentación viva en el repositorio | Aceptada |
+| ADR-8 | Stack tecnológico | Aceptada |
+| ADR-9 | Front propio como SPA estática; el gateway es la única entrada a la API | Aceptada |
 
 ### ADR-1: Monolito modular
 
-- **Estado:** Aceptada (revisada el 19/11: se quita el módulo `identidad`)
-- **Contexto:** 30 tiendas con tráfico bajo, un solo servidor y 2 becarios que rotan cada año. El sistema tiene que entenderse en una semana.
-- **Decisión:** Vamos a construir una sola aplicación desplegable, dividida en módulos internos por contexto de negocio: `tiendas`, `catalogo`, `pedidos` y `pagos` (las estadísticas del administrador se suman como módulo de solo lectura, ADR-5). No hay módulo `identidad`: el login y los roles los resuelve Keycloak (ADR-11), y la API recibe el usuario en `X-Usuario-Id`.
-- **Alternativas:** Monolito en capas (más simple, pero mezcla negocios distintos en las mismas capas); microservicios y event-driven (−3 en la matriz de Pugh: más infraestructura, más operación y más curva de aprendizaje).
-- **Consecuencias:** Una unidad que entender, desplegar y pagar; cada módulo se lee de forma aislada. Se resigna escalar módulos por separado. Hay que cuidar que un módulo no lea las tablas de otro.
-- **NFRs:** Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-8, que tiene prioridad baja.
-- **Confirmación:** el test de arquitectura (`apps/backend/tests/architecture/dependencias.test.js`) falla si un módulo importa capas internas de otro sin pasar por su `public-api`, o si se rompen las dependencias entre capas. Corre con `npm test`.
+- **Estado:** Aceptada
+- **Fecha:** 2026-11-03 (revisada el 2026-11-19: se elimina el módulo `identidad`)
 
-### ADR-2: Una base relacional con aislamiento por store\_id
+#### Contexto
+
+30 tiendas con tráfico bajo, un solo servidor y 2 becarios que rotan cada año. El sistema tiene que entenderse en una semana (NFR-1, estrella) y operar a costo cero (NFR-2, estrella).
+
+#### Decisión
+
+Vamos a construir una sola aplicación desplegable (`apps/backend`), dividida en módulos internos por contexto de negocio: `tiendas`, `catalogo`, `pedidos` y `pagos`.
+
+El módulo `identidad` se eliminó: el login y los roles los resuelve Keycloak (ADR-5), y la API recibe el usuario ya validado por el gateway en el header `X-Usuario-Id`.
+
+Cada módulo tiene las mismas capas (`domain`, `application`, `infrastructure`, `presentation`, `public-api`) y solo se comunica con otro a través de su `public-api`. `src/main/` es el único lugar que conoce todas las piezas.
+
+#### Alternativas
+
+- **Monolito en capas** (datum de la matriz de Pugh): más simple, pero mezcla negocios distintos en las mismas capas.
+- **Microservicios** y **event-driven**: −3 en la matriz de Pugh. Más infraestructura, más operación y más curva de aprendizaje; solo ganan en escalabilidad, que es prioridad baja (NFR-8).
+
+#### Consecuencias
+
+- Una unidad que entender, desplegar y pagar; cada módulo se lee de forma aislada.
+- **Negativas:** se resigna escalar módulos por separado. Los límites entre módulos no los impone el runtime: hay que cuidar que un módulo no lea las tablas ni importe las capas internas de otro.
+
+#### NFRs
+
+Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-8, que tiene prioridad baja.
+
+#### Confirmación
+
+El test de arquitectura `apps/backend/tests/architecture/dependencias.test.js` falla si un módulo importa capas internas de otro sin pasar por su `public-api`, o si se rompen las dependencias entre capas. Corre con `npm test` en `apps/backend`.
+
+### ADR-2: Monorepo con front y back
 
 - **Estado:** Aceptada
-- **Contexto:** La regla central es el aislamiento total entre tiendas. Con 1.500 productos como máximo, el volumen cabe en una sola base.
-- **Decisión:** Vamos a usar una única base relacional con tablas compartidas: cada tabla de tienda lleva `store_id NOT NULL`; la tienda viaja en la URL, la API verifica que el usuario del token (ADR-11) sea su dueño y el filtro se aplica en la capa de repositorios.
-- **Alternativas:** Una base por tienda o un esquema por tienda: se descartan porque implican 30 migraciones, 30 backups y 30 conjuntos de conexiones sin beneficio a esta escala.
-- **Consecuencias:** Una migración y un backup. El riesgo es olvidar un filtro; se mitiga con FK compuestas `(store_id, id)`, repositorios que exigen `store_id` y tests de acceso cruzado. Con PostgreSQL se puede sumar Row-Level Security como segunda barrera.
-- **NFRs:** Favorece NFR-1, NFR-2 y NFR-3 (con sus tests). El aislamiento depende de la disciplina del código, no de la infraestructura.
-- **Confirmación:** los tests de acceso cruzado (`apps/backend/tests/integration/`): la dueña de la tienda B no puede crear productos en la A y el catálogo de B no muestra productos de A. La misma prueba corre contra PostgreSQL real con el perfil `test` del compose.
+- **Fecha:** 2026-11-03 (revisada el 2026-11-19: se quita el módulo `identidad` de la lista, ver ADR-1)
 
-### ADR-3: Autenticación propia con sesión en el servidor (reemplazada)
+#### Contexto
 
-- **Estado:** Reemplazada por ADR-11. Se conserva como registro de la decisión original.
-- **Contexto:** Tres roles, sin presupuesto, en un servidor propio. La cátedra presentó proveedores de identidad con OIDC como opción.
-- **Decisión:** Vamos a autenticar con usuario y contraseña propios (hash adaptativo bcrypt o argon2) y mantener la sesión en el servidor, con una cookie `HttpOnly`, `Secure` y `SameSite`, y expiración por inactividad.
-- **Alternativas:** Proveedor de identidad externo con OIDC: más seguro de base, pero suma una pieza más para operar y entender. JWT sin estado: complica la revocación de sesiones y no aporta nada con un solo servidor.
-- **Consecuencias:** Sin costo ni dependencia externa, y el flujo completo se lee en un solo módulo. Se resigna SSO y MFA; el hashing, la expiración y la protección CSRF quedan a cargo propio. Si la universidad ofreciera un IdP institucional, se revisa este ADR.
-- **NFRs:** Favorece NFR-1 y NFR-2. Exige cuidado extra para cumplir NFR-4.
+Primero se separaron front y back en dos repositorios. El equipo cambia cada año y la entrega se hace con un único tag.
 
-### ADR-4: Pasarela de pagos detrás de un puerto, con implementación simulada
+#### Decisión
 
-- **Estado:** Aceptada (revisada el 19/11). Puerto, adaptador HTTP y mock implementados, sin un caso de uso que los use: el checkout de `pedidos` está diseñado, no implementado.
-- **Contexto:** La pasarela real no se integra en esta etapa, pero el checkout debe quedar diseñado y el sistema tiene que poder probarse sin red ni credenciales de un proveedor.
-- **Decisión:** Vamos a definir el puerto `PasarelaPagos` en el módulo `pagos`, con un adaptador HTTP que llama a `POST /cobros` con timeout de 5 segundos y traduce la respuesta a un formato propio. Como pasarela usamos un contenedor WireMock, `pasarela-mock`, en la red `pagos` y sin puertos publicados, con dos escenarios: aprobado, y rechazado si el monto supera 100.000. Si la pasarela no responde, el adaptador lanza `PasarelaNoDisponible` y la API devuelve 502.
-- **Alternativas:** Integración directa con un proveedor: ata el desarrollo y los tests a un tercero. Un mock en código dentro de `backend` (la primera versión de este ADR): un contenedor menos, pero el adaptador HTTP real quedaría sin ejercitar y cambiar de proveedor implicaría tocar código.
-- **Consecuencias:** Se prueba sin red ni credenciales, y pasar a un proveedor real es cambiar la URL del adaptador. Se resigna probar contra el comportamiento real del proveedor (demoras, webhooks). Suma un contenedor que operar. Sin caso de uso, el puerto todavía no está ejercitado por la aplicación.
-- **NFRs:** Favorece NFR-1 y NFR-2. Perjudica un poco NFR-5 por el contenedor extra.
-- **Confirmación:** desde el contenedor `backend`, un `POST` a `http://pasarela-mock:8080/cobros` con monto 5000 devuelve `aprobado` y con monto 150000 devuelve `rechazado` (comandos en el README). Cuando exista el checkout, pasa a ser un test automatizado.
+Vamos a usar un único repositorio con el front, el back, la infraestructura y la documentación juntos. Los nombres de carpetas van en inglés (`apps/`, `infra/`, `docs/`) y los módulos de negocio en español (`tiendas`, `catalogo`, `pedidos`, `pagos`).
 
-### ADR-5: Estadísticas con consultas sobre la misma base
+#### Alternativas
 
-- **Estado:** Aceptada
-- **Contexto:** El administrador necesita estadísticas agregadas de todas las tiendas, sobre un volumen muy chico.
-- **Decisión:** Vamos a calcular las estadísticas con consultas SQL de agregación sobre la base principal, en un módulo de solo lectura accesible únicamente para el rol administrador.
-- **Alternativas:** Almacén de datos o proceso de analítica aparte: es otra pieza que operar, injustificada para 1.500 productos.
-- **Consecuencias:** Cero infraestructura extra. Es el único módulo que consulta sin filtrar por tienda, por eso tiene sus propios tests de autorización.
-- **NFRs:** Favorece NFR-2. Exige cuidado en NFR-3.
-- **Confirmación:** prevista para cuando se implemente: un test de autorización en el que solo el rol `admin` accede a `GET /estadisticas`, y `dueno` y `comprador` reciben 403.
+- **Dos repositorios,** uno para el front y otro para el back: es la opción que se probó primero y se descartó.
 
-### ADR-6: Documentación viva en el repositorio
+#### Consecuencias
+
+- Un solo clon, un solo `docker compose up`, un solo tag `v1.0`; los cambios que tocan front y back van en el mismo commit.
+- **Negativas:** se resigna versionar y desplegar front y back por separado (no hace falta a esta escala). Cada parte tiene su propio `package.json` y `node_modules`, así que hay que instalar dependencias en tres carpetas.
+
+#### NFRs
+
+Favorece NFR-1 y NFR-5.
+
+#### Confirmación
+
+Un solo clon del repositorio alcanza para levantar todo y correr todos los tests; el tag `v1.0` cubre código, infraestructura y documentación.
+
+### ADR-3: Despliegue con Docker Compose en un solo servidor
 
 - **Estado:** Aceptada
-- **Contexto:** El conocimiento se pierde cada vez que egresan los becarios.
-- **Decisión:** Vamos a guardar el C4, los ADRs y el OpenAPI en `docs/`architecture/, dentro del mismo repositorio que el código, y a actualizarlos en el mismo commit que cambia la arquitectura.
-- **Alternativas:** Documentación en una wiki o en documentos aparte: se desactualiza porque no cambia junto con el código.
-- **Consecuencias:** Un solo lugar donde buscar. Requiere la disciplina de actualizar `docs/` en cada cambio relevante.
-- **NFRs:** Favorece NFR-1 y NFR-5.
-- **Confirmación:** antes de cada tag se revisa que los servicios del C4 de contenedores coincidan con `infra/compose/docker-compose.yml`. Swagger UI publica directamente el `openapi.yaml` del repositorio, así que lo que se prueba es el contrato versionado.
+- **Fecha:** 2026-11-03 (revisada el 2026-11-18: se suma `web`) (revisada el 2026-11-19: se suma `pasarela-mock`)
 
-### ADR-7: Stack tecnológico
+#### Contexto
 
-- **Estado:** Aceptada (revisada el 18/11: se suma el front)
-- **Contexto:** Sin Laravel ni frameworks similares. Tiene que ser un lenguaje que un becario promedio ya conozca o aprenda rápido, con librerías chicas. El repositorio arrancó sobre la base de la Clase 10. El front necesita login OIDC, listas y un formulario.
-- **Decisión:** Back-end en Node.js 22 con Express 5 como router mínimo y el driver `pg` con SQL parametrizado escrito a mano. Base PostgreSQL 16, que permite Row-Level Security como refuerzo del ADR-2. El gateway usa el mismo stack más `jose` para validar JWT. Front en React 19 con Vite 8 y react-router 7, compilado a archivos estáticos que sirve nginx; el login con PKCE se escribe a mano con la Web Crypto API, sin librería OIDC. Imágenes `node:22-alpine`, `postgres:16-alpine` y `nginx:alpine`.
-- **Alternativas:** Python con un micro-framework o Go con la librería estándar: igual de livianos, pero el material de la cátedra y el código inicial ya están en JavaScript. Un ORM: no se usa, así el filtro por tienda queda a la vista en cada consulta. Front en JavaScript sin librería: menos dependencias, pero el estado de cada vista queda a mano en cada página. Next.js u otro framework sobre React: suma un servidor y convenciones propias, justo lo que la restricción quiere evitar.
-- **Consecuencias:** Un solo lenguaje en front, gateway y API. Backend y gateway con dos dependencias directas cada uno, el front con tres de ejecución, todas MIT; nginx es BSD-2-Clause. React es una librería de interfaz, no un framework de aplicación como Laravel: no decide la estructura del backend ni el acceso a datos. Se resigna el tipado estático; la validación queda a mano y las reglas del producto están duplicadas en el formulario y en el dominio. React, Vite y el paso de build suman a lo que un becario tiene que aprender.
-- **NFRs:** Favorece NFR-2. En NFR-1 es mixto: un solo lenguaje lo favorece; React y el build lo perjudican.
-- **Confirmación:** los `package.json` del backend (express, pg), del gateway (express, jose) y del front (react, react-dom, react-router-dom); los Dockerfiles fijan `node:22-alpine` y, en el front, `nginx:alpine`.
+Un solo servidor de la universidad, sin servicios de nube y con becarios que tienen que desplegar sin ayuda.
 
-### ADR-8: Front propio como SPA estática; el gateway es la única entrada a la API
+#### Decisión
 
-- **Estado:** Aceptada (revisada el 18/11 y el 19/11). La primera versión ponía a `web` como única puerta de entrada y proxy de la API; al implementarlo, el gateway (ADR-11) ya cumplía ese rol y `web` quedó como servidor de archivos estáticos.
-- **Contexto:** Hay que servir la interfaz de los tres roles y exponer la API de forma segura. El gateway ya es la única entrada a la API, y `backend` y `db` no publican puertos.
-- **Decisión:** Vamos a tener un contenedor `web` propio (nginx) que solo sirve el build estático de React, con vistas por rol en un solo front. El navegador habla directo con Keycloak para el login (PKCE, cliente público `web-incubadora`) y con el gateway para la API, bajo `/v1`. El gateway acepta por CORS solo los orígenes de `CORS_ORIGIN`.
-- **Alternativas:** Que el nginx de `web` haga de proxy inverso hacia el gateway y Keycloak: un solo origen y sin CORS, pero una configuración de nginx más que entender. Servir la interfaz desde la API o desde el gateway: un contenedor menos, pero mezcla la interfaz con el negocio o con la seguridad. Dos fronts separados (cliente-vendedor y administrador), como el borrador en draw.io: el doble de piezas.
-- **Consecuencias:** `web` no tiene lógica ni secretos; cada contenedor hace una sola cosa, y nginx ya resuelve las recargas de rutas del front con un fallback a `index.html`. Se resigna tener un solo puerto: hacia el usuario quedan 3000 (`web`), 8000 (`gateway`) y 8180 (`keycloak`), más 8080 de Swagger UI. Hay que mantener alineados `CORS_ORIGIN` y el redirect URI del realm, y las URLs de Keycloak y del gateway están escritas en el código del front.
-- **NFRs:** Favorece NFR-1 (cada contenedor hace una sola cosa) y NFR-4 (la API sigue sin puerto publicado). Perjudica un poco NFR-5, por los orígenes y las URLs que hay que configurar.
-- **Confirmación:** `docker compose ps` muestra que `backend` y `db` no publican puertos y que `web` solo publica el 3000. El gateway rechaza con 404 cualquier ruta que no esté en su tabla de reglas o que no lleve el prefijo `/v1`.
+Vamos a definir los servicios en Compose y levantarlos con un solo comando, igual en local que en el servidor. Es un solo archivo, `infra/compose/docker-compose.yml`, con 7 servicios: `db`, `backend`, `keycloak`, `gateway`, `web`, `swagger-ui` y `pasarela-mock`. El servicio `backend-tests` solo existe con el perfil `test`.
 
-### ADR-9: Monorepo con front y back
+Las contraseñas de desarrollo están escritas en el compose, para que alcance con clonar y levantar, sin pasos previos.
 
-- **Estado:** Aceptada (revisada el 19/11: se quita `identidad` de la lista de módulos)
-- **Contexto:** Primero se separaron front y back en dos repositorios.
-- **Decisión:** Vamos a usar un único repositorio con el front, el back y `docs/` juntos, con nombres de carpetas en inglés (`apps/`, `infra/`, `docs/`) y los módulos de negocio en español (`tiendas`, `catalogo`, `pedidos`, `pagos`).
-- **Alternativas:** Dos repositorios, uno para el front y otro para el back: es la opción que se probó primero y se descartó.
-- **Consecuencias:** Un solo clon, un solo `docker compose up`, un solo tag `v1.0` para la entrega; los cambios que tocan front y back van en el mismo commit. Se resigna versionar y desplegar front y back por separado, algo que no hace falta a esta escala.
-- **NFRs:** Favorece NFR-1 y NFR-5.
-- **Confirmación:** un solo clon del repositorio alcanza para levantar todo y correr todos los tests; el tag `v1.0` cubre código, infraestructura y documentación.
+#### Alternativas
 
-### ADR-10: Despliegue con Docker Compose en un solo servidor
+- **Instalación manual en el servidor:** difícil de reproducir y de documentar.
+- **Kubernetes o servicios de nube:** costo y complejidad injustificados para 30 tiendas.
 
-- **Estado:** Aceptada (revisada el 18/11: se suma `web`; y el 19/11: se suma `pasarela-mock`)
-- **Contexto:** Un solo servidor de la universidad, sin servicios de nube y con becarios que tienen que desplegar sin ayuda.
-- **Decisión:** Vamos a definir los servicios en Compose y levantarlos con un solo comando, igual en local que en el servidor. Es un solo archivo, `infra/compose/docker-compose.yml`, con `db`, `backend`, `keycloak`, `gateway`, `web`, `swagger-ui` y `pasarela-mock`; el servicio `backend-tests` solo existe con el perfil `test`.
-- **Alternativas:** Instalación manual en el servidor (difícil de reproducir); Kubernetes o servicios de nube (costo y complejidad injustificados).
-- **Consecuencias:** El entorno local es idéntico al de producción y el onboarding empieza con un comando. Se resignan alta disponibilidad y escalado automático; el servidor es un único punto de falla. Las contraseñas de desarrollo quedan escritas en el compose a propósito, para levantar sin pasos previos; en el servidor real van en un `.env` fuera del repositorio.
-- **NFRs:** Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-7, que tiene prioridad baja.
-- **Confirmación:** `docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los siete servicios en una máquina limpia; es el primer paso de la prueba de onboarding (NFR-1).
+#### Consecuencias
 
-### ADR-11: Identidad con Keycloak y gateway como única entrada
+- El entorno local es idéntico al de producción y el onboarding empieza con un comando.
+- **Negativas:** se resignan alta disponibilidad y escalado automático; el servidor es un único punto de falla. Las contraseñas de desarrollo están escritas en el compose; para el servidor real hay que pasarlas a un `.env` fuera del repo.
 
-- **Estado:** Aceptada. Reemplaza a ADR-3 (revisada el 18/11: se suma el cliente del front).
-- **Contexto:** La Clase 11 presentó OIDC con Keycloak y un gateway delante de la API. El equipo lo adoptó en el repositorio en lugar de la autenticación propia de ADR-3.
-- **Decisión:** Keycloak es el proveedor de identidad, con el realm `incubadora-universitaria` versionado en `infra/keycloak/`, los roles `admin`, `dueno` y `comprador` y dos clientes públicos con PKCE: `web-incubadora` (el front) y `swagger-ui`. Un gateway propio (`infra/gateway/`) es la única puerta a la API: verifica firma, emisor, audiencia y vencimiento del access token, aplica una tabla de reglas método + ruta → roles y le pasa a la API el usuario (`sub`) en el header `X-Usuario-Id`, que arma desde cero para que el cliente no pueda inventarlo. La API no publica puertos. El front guarda el token en `sessionStorage` y lo manda como `Authorization: Bearer`.
-- **Alternativas:** Autenticación propia con sesión en el servidor (ADR-3): una pieza menos, pero el hashing, la expiración, CSRF y la revocación quedan a cargo de becarios que rotan. Validar el token dentro de la API: ahorra un contenedor, pero mezcla seguridad con negocio. Guardar el token solo en memoria en el front: más resistente a XSS, pero se pierde con cada recarga.
-- **Consecuencias:** Login, contraseñas y vencimientos quedan en un producto libre (Apache 2.0) y mantenido por terceros; un token adulterado falla la verificación de firma. Se suman dos contenedores y un concepto nuevo (OIDC) al onboarding. El token vale hasta su vencimiento de 5 minutos, sin revocación inmediata, y el front no lo renueva: al vencer, hay que volver a iniciar sesión. En `sessionStorage` un XSS podría leerlo; se acepta por el vencimiento corto y porque React escapa el contenido. Keycloak corre en modo desarrollo, sin HTTPS ni base persistente; en el servidor hace falta `start` con HTTPS y su propia base. La API confía en `X-Usuario-Id` porque solo la alcanza el gateway, por la red interna.
-- **NFRs:** Favorece NFR-4 y mantiene NFR-2 en costo cero. Perjudica NFR-1 y NFR-5 por las piezas extra; NFR-3 se cubre con la verificación de dueño en la API y sus tests.
-- **Confirmación:** los tests del gateway (`infra/gateway/tests/autorizacion.test.js`) firman tokens con una clave propia y verifican que se rechace con 401 un token con firma ajena, emisor o audiencia equivocados o vencido; que se rechace con 403 un rol insuficiente; y que un `X-Usuario-Id` inventado por el cliente se descarte.
+#### NFRs
+
+Favorece NFR-1, NFR-2 y NFR-5. Perjudica NFR-7, que tiene prioridad baja.
+
+#### Confirmación
+
+`docker compose -f infra/compose/docker-compose.yml up -d --build` levanta los siete servicios en una máquina limpia.
+
+### ADR-4: Una base relacional con aislamiento por tienda
+
+- **Estado:** Aceptada
+- **Fecha:** 2026-11-03 (revisada el 2026-11-13: la tienda viaja en la URL y la API verifica al dueño)
+
+#### Contexto
+
+La regla central del dominio es el aislamiento total entre tiendas (NFR-3). Con 30 tiendas y catálogos chicos (alrededor de 1.500 productos), el volumen cabe en una sola base.
+
+#### Decisión
+
+Vamos a usar una única base PostgreSQL con tablas compartidas: cada tabla que pertenece a una tienda lleva `tienda_id NOT NULL`.
+
+- La tienda viaja en la URL (`/tiendas/{id}/...`).
+- En las escrituras, la API verifica que el usuario del token (`X-Usuario-Id`, que arma el gateway, ADR-5) sea el dueño de esa tienda, a través de la `public-api` del módulo `tiendas`.
+- El filtro por tienda se aplica en la capa de repositorios: no existe un método "listar todos".
+
+#### Alternativas
+
+- **Una base por tienda** o **un esquema por tienda:** aislamiento fuerte por infraestructura, pero implican 30 migraciones, 30 backups y 30 conjuntos de conexiones, sin beneficio a esta escala.
+
+#### Consecuencias
+
+- Una migración y un backup.
+- **Negativas:** el aislamiento depende de la disciplina del código, no de la base. Un endpoint nuevo que olvide verificar al dueño o filtrar por `tienda_id` expone datos de otra tienda. Se mitiga con repositorios que exigen la tienda y con tests de acceso cruzado. Row-Level Security de PostgreSQL queda como segunda barrera futura, todavía sin implementar.
+
+#### NFRs
+
+Favorece NFR-1, NFR-2 y NFR-3 (con sus tests). Exige cuidado en NFR-3 en cada caso de uso nuevo.
+
+#### Confirmación
+
+Los tests de acceso cruzado en `apps/backend/tests/integration/`: la dueña de la tienda B no puede crear productos en la A y el catálogo de B no muestra productos de A. La misma prueba corre contra PostgreSQL real con el perfil `test` del compose.
+
+#### Respuesta ante una tienda ajena
+
+Un dueño que intenta escribir en una tienda ajena recibe **403** con Problem Details (NFR-3). El diseño original proponía 404 para no revelar que la tienda existe, pero las tiendas son públicas (la lista y los catálogos se leen sin login), así que un 404 no ocultaría nada y confundiría al dueño.
+
+### ADR-5: Identidad con Keycloak y gateway como única entrada a la API
+
+- **Estado:** Aceptada
+- **Fecha:** 2026-11-03 (revisada el 2026-11-18: se suma el cliente del front)
+
+#### Contexto
+
+La Clase 11 presentó OIDC con Keycloak y un gateway delante de la API. El equipo lo adoptó en lugar de una autenticación propia. La seguridad general (NFR-4) es prioridad alta, y los becarios que rotan no deberían mantener hashing, vencimientos ni CSRF.
+
+#### Decisión
+
+- **Keycloak** es el proveedor de identidad, con el realm `incubadora-universitaria` versionado en `infra/keycloak/` y los roles `admin`, `dueno` y `comprador`. Tiene dos clientes públicos con PKCE: `web-incubadora` (el front) y `swagger-ui`.
+- **Un gateway propio** (`infra/gateway/`) es la única puerta a la API:
+  - verifica la firma, el emisor, la audiencia (`api-incubadora`) y el vencimiento del access token;
+  - aplica una tabla de reglas método + ruta → roles;
+  - le pasa a la API el usuario (`sub`) en `X-Usuario-Id`, un header que arma desde cero para que el cliente no pueda inventarlo.
+- La API no publica puertos.
+- El front guarda el access token en `sessionStorage` y lo manda como `Authorization: Bearer`.
+
+#### Alternativas
+
+- **Autenticación propia con sesión en el servidor**: una pieza menos, pero el hashing, la expiración, CSRF y la revocación quedan a cargo de becarios que rotan.
+- **Validar el token dentro de la API:** ahorra un contenedor, pero mezcla seguridad con negocio.
+- **Guardar el token solo en memoria** en el front: más resistente a XSS, pero se pierde con cada recarga de página.
+
+#### Consecuencias
+
+- Login, contraseñas y vencimientos quedan en un producto libre (Apache 2.0) mantenido por terceros; un token adulterado falla la verificación de firma.
+- **Negativas:**
+  - Se suman dos contenedores y un concepto nuevo (OIDC) al onboarding.
+  - El token vale hasta su vencimiento de 5 minutos, sin revocación inmediata, y el front no lo renueva: al vencer, hay que volver a iniciar sesión.
+  - En `sessionStorage`, un XSS podría leer el token. Se acepta porque vence a los 5 minutos y React escapa el contenido que muestra.
+  - Keycloak corre en modo desarrollo, sin HTTPS ni base persistente; en el servidor hace falta `start` con HTTPS y su propia base.
+  - La API confía en `X-Usuario-Id` porque solo la alcanza el gateway por la red interna: si alguien publica el puerto del backend, cualquiera puede hacerse pasar por otro usuario.
+
+#### NFRs
+
+Favorece NFR-4 y mantiene NFR-2 en costo cero. Perjudica NFR-1 y NFR-5 por las piezas extra. NFR-3 se cubre con la verificación de dueño en la API y sus tests.
+
+#### Confirmación
+
+Los tests del gateway (`infra/gateway/tests/autorizacion.test.js`) firman tokens con una clave propia y verifican:
+
+- 401 con un token de firma ajena, con emisor o audiencia equivocados, o vencido;
+- 403 con un rol insuficiente;
+- que un `X-Usuario-Id` inventado por el cliente se descarte.
+
+### ADR-6: Pasarela de pagos detrás de un puerto, con implementación simulada
+
+- **Estado:** Aceptada; puerto, adaptador HTTP y mock implementados, sin caso de uso que los use (el checkout de `pedidos` está diseñado, no implementado)
+- **Fecha:** 2026-11-03 (revisada el 2026-11-19: el mock pasa a ser un contenedor WireMock y el adaptador habla HTTP)
+
+#### Contexto
+
+La pasarela de pagos real no se integra en esta etapa, pero el checkout tiene que quedar diseñado. Es el único sistema externo del escenario.
+
+#### Decisión
+
+Vamos a definir un puerto `PasarelaPagos` (método `cobrar`) en `modules/pagos/application/ports/pasarela-pagos.js`, con un adaptador HTTP en `modules/pagos/infrastructure/external/pasarela-pagos-http.js`. El resto del sistema llega al cobro solo por la `public-api` del módulo `pagos`.
+
+El mock es un contenedor WireMock aparte, `pasarela-mock`, en la red `pagos` y sin puertos publicados: solo lo ve `backend`. Tiene dos escenarios versionados en `infra/pasarela-mock/mappings`: cobro aprobado, y rechazado si el monto supera 100000.
+
+El adaptador le pega a `POST /cobros` con un timeout de 5 s. Si la pasarela no responde o contesta algo inesperado, lanza `PasarelaNoDisponible`, que la API traduce a 502. Pasar a un proveedor real es cambiar la URL que recibe el adaptador (y, si su contrato es otro, adaptar solo ese archivo).
+
+#### Alternativas
+
+- **Integración directa con un proveedor:** ata el desarrollo y los tests a un tercero, a sus credenciales y a la red.
+- **Mock dentro del backend** (una función que aprueba o rechaza): un contenedor menos, pero no ejercita la llamada HTTP, el timeout ni el error de red, que es justo lo que falla con un proveedor real.
+
+#### Consecuencias
+
+- Se prueba sin internet ni credenciales, y el adaptador es el mismo que usaría el proveedor real.
+- **Negativas:**
+  - Un contenedor más que operar.
+  - Sin caso de uso, el puerto todavía no está ejercitado por la app: ningún flujo de usuario llama a `cobrar`.
+  - Se resigna probar contra el comportamiento real del proveedor (demoras, webhooks, reintentos).
+
+#### NFRs
+
+Favorece NFR-1 y NFR-2.
+
+#### Confirmación
+
+El cobro aprobado (monto 5000) y el rechazado (monto 150000) se demuestran contra el mock desde el contenedor `backend`:
+
+```bash
+docker compose -f infra/compose/docker-compose.yml exec backend node -e "fetch('http://pasarela-mock:8080/cobros',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({monto:5000,referencia:'demo-1'})}).then(r=>r.json()).then(console.log)"
+```
+
+### ADR-7: Documentación viva en el repositorio
+
+- **Estado:** Aceptada
+- **Fecha:** 2026-11-03
+
+#### Contexto
+
+El conocimiento se pierde cada vez que egresan los becarios (restricción del escenario 4A).
+
+#### Decisión
+
+Vamos a guardar el C4, los ADRs y el contrato OpenAPI en `docs/architecture/`, dentro del mismo repositorio que el código, y a actualizarlos en el mismo commit que cambia la arquitectura.
+
+#### Alternativas
+
+- **Wiki o documentos aparte:** más cómodos de editar, pero se desactualizan porque no cambian junto con el código.
+
+#### Consecuencias
+
+- Un solo lugar donde buscar, versionado con el código.
+- **Negativas:** requiere la disciplina de tocar `docs/` en cada cambio relevante; nada lo fuerza automáticamente.
+
+#### NFRs
+
+Favorece NFR-1 y NFR-5.
+
+#### Confirmación
+
+Antes de cada tag se revisa que los servicios del C4 de contenedores coincidan con `infra/compose/docker-compose.yml`. Swagger UI publica directamente `docs/architecture/openapi/openapi.yaml`, así que lo que se prueba es el contrato versionado.
+
+### ADR-8: Stack tecnológico
+
+- **Estado:** Aceptada
+- **Fecha:** 2026-11-13 (revisada el 2026-11-18: se suma el front)
+
+#### Contexto
+
+Sin Laravel ni frameworks similares. Tiene que ser un lenguaje que un becario promedio ya conozca o aprenda rápido, con librerías chicas (NFR-1) y todo libre (NFR-2). El repositorio arrancó sobre la base de la Clase 10. El front necesita login OIDC, listas y un formulario.
+
+#### Decisión
+
+- **Back-end y gateway:** Node.js 22 con Express 5 como router mínimo. El backend usa el driver `pg` con SQL parametrizado escrito a mano; el gateway suma `jose` para validar JWT.
+- **Base:** PostgreSQL 16, que permite Row-Level Security como refuerzo del ADR-4.
+- **Front:** React 19 con Vite 8 y react-router 7, compilado a archivos estáticos que sirve nginx. El login con PKCE se escribe a mano con la Web Crypto API del navegador, sin librería OIDC.
+- **Imágenes:** `node:22-alpine`, `postgres:16-alpine` y `nginx:alpine`.
+
+#### Alternativas
+
+- **Python con un micro-framework o Go con la librería estándar:** igual de livianos, pero el material de la cátedra y el código inicial ya están en JavaScript.
+- **Un ORM:** no se usa, así el filtro por tienda queda a la vista en cada consulta.
+- **Front en JavaScript sin librería** (HTML + `fetch`): menos dependencias, pero el estado de cada vista (login, carga, errores) queda a mano en cada página.
+- **Next.js u otro framework sobre React:** suma un servidor y convenciones propias, justo lo que la restricción "sin frameworks" quiere evitar.
+
+#### Consecuencias
+
+- Un solo lenguaje en front, gateway y API.
+- El backend y el gateway tienen dos dependencias directas cada uno; el front, tres de ejecución. Todas son MIT, y nginx es BSD-2-Clause.
+- React es una librería de interfaz, no un framework de aplicación como Laravel: no decide la estructura del backend ni el acceso a datos.
+- **Negativas:** el front suma React, Vite, react-router y un paso de build a lo que un becario tiene que aprender. Se resigna el tipado estático. La validación de entrada queda a mano, y las reglas del producto están duplicadas en el formulario y en el dominio.
+
+#### NFRs
+
+Favorece NFR-2. En NFR-1 es mixto: un solo lenguaje lo favorece; React y el build lo perjudican.
+
+#### Confirmación
+
+`apps/backend/package.json` (express, pg), `infra/gateway/package.json` (express, jose) y `apps/frontend/package.json` (react, react-dom, react-router-dom). Los Dockerfiles fijan `node:22-alpine`, y el del front, `nginx:alpine`.
+
+### ADR-9: Front propio como SPA estática; el gateway es la única entrada a la API
+
+- **Estado:** Aceptada
+- **Fecha:** 2026-11-03 (revisada el 2026-11-18) (revisada el 2026-11-19: nginx ya tiene fallback a `index.html` y la API pasa a `/v1`)
+- **Cambio:** la primera versión ("front propio en lugar de proxy inverso") ponía al contenedor `web` como única puerta de entrada y proxy de la API. Al implementarlo, el gateway (ADR-5) ya cumplía ese rol, y `web` quedó como un servidor de archivos estáticos.
+
+#### Contexto
+
+Hay que servir la interfaz de los tres roles y exponer la API de forma segura. El gateway ya es la única entrada a la API, y `backend` y `db` no publican puertos.
+
+#### Decisión
+
+Vamos a tener un contenedor `web` propio (nginx) que solo sirve el build estático de React, con vistas por rol en un solo front. El navegador habla directo con Keycloak para el login (Authorization Code + PKCE, cliente público `web-incubadora`) y con el gateway para la API, publicada bajo `/v1` (`http://localhost:8000/v1`). nginx tiene fallback a `index.html`, así una recarga en una ruta del front (por ejemplo `/mi-tienda`) no da 404. El gateway acepta por CORS solo los orígenes de `CORS_ORIGIN` (hoy `web` y Swagger UI).
+
+#### Alternativas
+
+- **Que el nginx de `web` haga de proxy inverso** hacia el gateway y Keycloak: un solo origen, sin CORS y un solo puerto publicado, pero una configuración de nginx más que entender y mantener.
+- **Servir la interfaz desde la API o desde el gateway:** un contenedor menos, pero mezcla la interfaz con el negocio o con la seguridad, y el gateway deja de ser solo un filtro.
+- **Dos fronts separados** (cliente-vendedor y administrador), como el borrador en draw.io: el doble de piezas que construir y desplegar.
+
+#### Consecuencias
+
+- `web` no tiene lógica ni secretos: es nginx con archivos estáticos. Cada contenedor hace una sola cosa.
+- **Negativas:**
+  - Hacia el usuario quedan tres puertos (3000 `web`, 8000 `gateway`, 8180 `keycloak`), más 8080 de Swagger UI, en lugar de uno.
+  - Hay que mantener alineados `CORS_ORIGIN` en el gateway y el redirect URI del cliente `web-incubadora` en el realm.
+  - Las URLs de Keycloak y del gateway están escritas en el código del front; para desplegar en el servidor hay que pasarlas a variables de build (`VITE_*`).
+#### NFRs
+
+Favorece NFR-1 (cada contenedor hace una sola cosa) y NFR-4 (la API sigue sin puerto publicado). Perjudica un poco NFR-5, por los orígenes y las URLs que hay que configurar.
+
+#### Confirmación
+
+`docker compose -f infra/compose/docker-compose.yml ps` muestra que `backend` y `db` no publican puertos, y que `web` solo publica el 3000. El gateway rechaza con 404 cualquier ruta que no esté en su tabla de reglas.
+
+<!-- ADRS:FIN -->
 
 ## 12. Evaluación de la arquitectura
 
@@ -342,12 +550,12 @@ La debilidad principal es que el aislamiento descansa en dos cosas que no garant
 
 | Hallazgo | Onboarding · NFR-1 (A, A) | Aislamiento · NFR-3 (A, M) | Autenticación · NFR-4 (A, M) |
 | --- | --- | --- | --- |
-| Enfoque | Monolito modular con las mismas capas en cada módulo, un solo compose y Keycloak + gateway (ADR-1, ADR-10, ADR-11) | La tienda viaja en la URL, la API verifica al dueño y los repositorios filtran por `tienda_id` (ADR-2) | El gateway valida firma, emisor, audiencia y vencimiento con las claves públicas de Keycloak (ADR-11) |
+| Enfoque | Monolito modular con las mismas capas en cada módulo, un solo compose y Keycloak + gateway (ADR-1, ADR-3, ADR-5) | La tienda viaja en la URL, la API verifica al dueño y los repositorios filtran por `tienda_id` (ADR-4) | El gateway valida firma, emisor, audiencia y vencimiento con las claves públicas de Keycloak (ADR-5) |
 | Punto de sensibilidad | El tiempo de onboarding depende de cuántas piezas hay que entender: siete contenedores, un front en React y un concepto nuevo, OIDC | Depende de que cada caso de uso que escribe verifique al dueño y de que cada consulta filtre por `tienda_id` | Depende de que toda ruta protegida esté en la tabla de reglas y de que la API solo sea alcanzable a través del gateway |
 | Punto de trade-off | Keycloak mejora la seguridad (NFR-4) a costa de comprensibilidad (NFR-1) y operación (NFR-5) | Una base compartida baja el costo (NFR-2), pero deja el aislamiento en manos del código (NFR-3) | El token sin estado evita consultar a Keycloak en cada pedido, pero no se puede revocar antes de sus 5 minutos |
 | Riesgo | Un becario sin experiencia en OIDC puede tardar en entender el realm y los tokens; Keycloak corre en modo desarrollo, sin base persistente | Un endpoint nuevo que olvide la verificación expone datos de otra tienda; Row-Level Security no está implementado | La API confía en `X-Usuario-Id`: si alguien publica el puerto del backend, cualquiera puede hacerse pasar por otro usuario |
 | No-riesgo | El código de negocio se lee módulo por módulo, y el test de arquitectura impide que la estructura se erosione | El cliente no elige el usuario: `X-Usuario-Id` lo arma el gateway desde el token validado | Una ruta que no está en la tabla de reglas responde 404 y no llega a la API: el gateway falla cerrado |
-| Qué se hace con el riesgo | Verificación: prueba de onboarding con alguien ajeno (NFR-1). Aceptado: Keycloak en modo desarrollo, documentado en ADR-11 | Verificación: tests de acceso cruzado en cada cambio. Aceptado por ahora: RLS queda como segunda barrera futura (ADR-2) | Verificación: la confirmación del ADR-8 (`docker compose ps` sin puertos de `backend` ni `db`) |
+| Qué se hace con el riesgo | Aceptado: Keycloak en modo desarrollo, documentado en ADR-5 | Verificación: tests de acceso cruzado en cada cambio. Aceptado por ahora: RLS queda como segunda barrera futura (ADR-4) | Verificación: la confirmación del ADR-9 (`docker compose ps` sin puertos de `backend` ni `db`) |
 
 **Tema de riesgo:** la seguridad del aislamiento depende de la disciplina del código y de la topología de red, no de la base. Amenaza el objetivo central del dominio, el aislamiento total entre tiendas. Por eso la verificación de dueño tiene tests automáticos, y la topología se revisa antes de cada tag con docker compose ps.
 
@@ -357,29 +565,14 @@ Tres NFRs se verifican con pruebas automatizadas: NFR-1, NFR-3 y NFR-4. Para el 
 
 | NFR | Evidencia en la entrega | Dónde se ve | Resultado |
 | --- | --- | --- | --- |
-| NFR-1 Mantenibilidad | Test de arquitectura que falla si un módulo entra a otro sin pasar por su `public-api` o si se rompen las capas; prueba de onboarding: alguien ajeno clona el repositorio, lo levanta y agrega un campo a Producto siguiendo solo el README | `apps/backend/tests/architecture/`, README, tiempo medido | Parcial: el test de arquitectura está en verde; falta la prueba de onboarding |
+| NFR-1 Mantenibilidad | Test de arquitectura que falla si un módulo entra a otro sin pasar por su `public-api` o si se rompen las capas | `apps/backend/tests/architecture/` | Cumplido: el test de arquitectura está en verde |
 | NFR-2 Costo | Inventario de dependencias, todas con licencia libre; un solo servidor, sin servicios pagos | Tabla de dependencias en el README | Por inventario: Keycloak y Swagger UI (Apache 2.0), PostgreSQL (licencia PostgreSQL), Express, pg, jose, React, react-router y Vite (MIT), nginx (BSD-2-Clause), WireMock (Apache 2.0). Todo corre en el servidor de la universidad: costo mensual adicional cero. La tabla está en el README |
 | NFR-3 Aislamiento | Tests automatizados de acceso cruzado: la dueña de la tienda A carga un producto, el catálogo de la tienda B no lo muestra y la dueña de B recibe 403 al intentar crear en A; la misma prueba corre contra PostgreSQL real | `apps/backend/tests/integration/`, perfil `test` del compose | Cumplido en la suite del backend (45 tests en verde); falta registrar la corrida contra la base del compose |
-| NFR-4 Seguridad general | Tests del gateway: 401 sin token, con firma ajena, con emisor o audiencia equivocados y con token vencido; 403 cuando el rol no alcanza; un `X-Usuario-Id` inventado por el cliente se descarta. Revisión contra OWASP Top 10 | `infra/gateway/tests/` | Parcial: 13 tests en verde; falta la revisión OWASP |
-| NFR-5 Operabilidad | Simulacro: backup con pg\_dump y restauración siguiendo solo el README | Argumento, sin prueba ejecutada | Lo sostienen una sola base (ADR-2), un solo comando para levantar todo (ADR-10) y los logs en la salida estándar (`docker compose logs`). El backup es un `pg_dump` de esa única base |
+| NFR-4 Seguridad general | Tests del gateway: 401 sin token, con firma ajena, con emisor o audiencia equivocados y con token vencido; 403 cuando el rol no alcanza; un `X-Usuario-Id` inventado por el cliente se descarta. | `infra/gateway/tests/` | 13 tests en verde |
+| NFR-5 Operabilidad | Simulacro: backup con pg\_dump y restauración siguiendo solo el README | Argumento, sin prueba ejecutada | Lo sostienen una sola base (ADR-4), un solo comando para levantar todo (ADR-3) y los logs en la salida estándar (`docker compose logs`). El backup es un `pg_dump` de esa única base |
 | NFR-6 Rendimiento | Datos de prueba con 30 tiendas × 50 productos y medición del tiempo de respuesta del catálogo, objetivo menor a 1 s | Argumento, sin prueba ejecutada | Lo sostiene el volumen: 1.500 productos como máximo, y el catálogo es una sola consulta filtrada por `tienda_id` en la misma máquina, sin servicios externos en el camino. Con tráfico bajo y parejo no hay contención |
-| NFR-7 Disponibilidad | Política de backup diario documentada y probada | Argumento, sin prueba ejecutada | Prioridad baja por decisión (ADR-10): una caída de menos de 4 horas es tolerable y el backup diario limita la pérdida a 24 horas. Además, el catálogo público no depende de Keycloak, porque el gateway no valida token en esas rutas; si se cae el proveedor de identidad, solo se frenan las altas |
-| NFR-8 Escalabilidad | Decisión explícita de no escalar horizontalmente | ADR-1 y ADR-10 | Cumplido por decisión |
-
-## 14. Estado del repositorio y pendientes
-
-Al 19 de noviembre de 2026, en la rama `dev`, el caso de uso mínimo funciona de punta a punta desde el front: login con Keycloak, lista de tiendas, catálogo y carga de producto desde «Editar mi tienda», con el aislamiento verificado por tests (43 en el backend y 14 en el gateway, en verde). Desde el 18/11 se sumaron el versionado `/v1`, la vista «Editar mi tienda» y la pasarela simulada, y se limpiaron la regla huérfana del gateway, el CORS del backend y el build del front. Lo que falta, ordenado por lo que bloquea la entrega:
-
-| # | Pendiente | Dónde | Qué hacer |
-| --- | --- | --- | --- |
-| 1 | El trabajo vive en `dev`; `main` está atrasado y no hay tag | Git | Merge a `main`, `docker compose down -v` y `up` desde cero, tests en verde, tag `v1.0` |
-| 2 | No hay simulacro de restauración (NFR-5) ni prueba de carga del catálogo (NFR-6) | README, sección 13 | Correrlos con los comandos del README y registrar el resultado; si no, quedan como argumento en la sección 13 |
-| 3 | Falta la prueba de onboarding (NFR-1) y la revisión OWASP (NFR-4) | README, sección 13 | Hacerlas y registrar el resultado |
-| 4 | El checkout no está implementado: `pedidos` no existe y nadie llama a la pasarela | módulos `pedidos` y `pagos` | Diseñado; conectar `pedidos` con la `public-api` de `pagos` (ADR-4) |
-| 5 | El carrito del front es una maqueta | `apps/frontend` | Avisa que el checkout no está implementado; se conecta junto con el punto 4 |
-| 6 | URLs de Keycloak y del gateway repetidas en cuatro archivos del front | `apps/frontend/src` | Un solo `config.js` con `import.meta.env.VITE_*` |
-| 7 | Contraseñas de desarrollo escritas en el compose | `infra/compose/docker-compose.yml` | Aceptado para desarrollo; en el servidor real, `.env` fuera del repositorio |
-| 8 | El administrador entra pero no tiene funcionalidades | módulos `tiendas` y estadísticas | Diseñado (ADR-5); opcional para la entrega |
+| NFR-7 Disponibilidad | Política de backup diario documentada y probada | Argumento, sin prueba ejecutada | Prioridad baja por decisión (ADR-3): una caída de menos de 4 horas es tolerable y el backup diario limita la pérdida a 24 horas. Además, el catálogo público no depende de Keycloak, porque el gateway no valida token en esas rutas; si se cae el proveedor de identidad, solo se frenan las altas |
+| NFR-8 Escalabilidad | Decisión explícita de no escalar horizontalmente | ADR-1 y ADR-3 | Cumplido por decisión |
 
 ## Anexo: cómo levantarlo y usuarios de prueba
 

@@ -1,6 +1,6 @@
 # Diagramas C4
 
-Exportados del documento de arquitectura el 18/11/2026. Antes de cada tag se revisa que el diagrama de contenedores coincida con `infra/compose/docker-compose.yml` (ADR-6).
+Exportados del documento de arquitectura el 18/11/2026. Antes de cada tag se revisa que el diagrama de contenedores coincida con `infra/compose/docker-compose.yml` (ADR-7).
 
 ## Nivel 1 · Contexto
 

@@ -1,8 +1,8 @@
-# ADR-8: Front propio como SPA estática; el gateway es la única entrada a la API
+# ADR-9: Front propio como SPA estática; el gateway es la única entrada a la API
 
 - **Estado:** Aceptada
 - **Fecha:** 2026-11-03 (revisada el 2026-11-18) (revisada el 2026-11-19: nginx ya tiene fallback a `index.html` y la API pasa a `/v1`)
-- **Cambio:** la primera versión ("front propio en lugar de proxy inverso") ponía al contenedor `web` como única puerta de entrada y proxy de la API. Al implementarlo, el gateway (ADR-11) ya cumplía ese rol, y `web` quedó como un servidor de archivos estáticos.
+- **Cambio:** la primera versión ("front propio en lugar de proxy inverso") ponía al contenedor `web` como única puerta de entrada y proxy de la API. Al implementarlo, el gateway (ADR-5) ya cumplía ese rol, y `web` quedó como un servidor de archivos estáticos.
 
 ## Contexto
 
