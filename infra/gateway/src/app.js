@@ -14,7 +14,6 @@ export const REGLAS = [
   { metodo: 'GET',    ruta: /^\/mi-tienda$/,      roles: ['dueno'] },                // NUEVA
   { metodo: 'POST',   ruta: /^\/tiendas$/,         roles: ['admin'] },
   { metodo: 'DELETE', ruta: /^\/tiendas\/[^/]+$/,  roles: ['admin'] },
-  { metodo: 'GET', ruta: /^\/productos$/, roles: null },
   { metodo: 'POST',   ruta: /^\/tiendas\/[^/]+\/productos$/, roles: ['dueno'] },
 ];
 

@@ -24,7 +24,12 @@ function FilaProducto({ producto, comprable = false }) {
 
       {comprable && !sinStock && (
         <div className="compra">
-          {agregado && <span role="status" className="agregado">Agregaste {agregado} al carrito ✓</span>}
+          {/* El carrito es maqueta: el aviso deja claro que no se registró ninguna compra. */}
+          {agregado && (
+            <span role="status" className="agregado">
+              Carrito en preparación: el checkout está diseñado, pero todavía no está implementado.
+            </span>
+          )}
 
           <div className="cantidad">
             <button

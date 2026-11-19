@@ -13,14 +13,8 @@ export function crearApp({ routers, verificarBase }) {
   const app = express();
   app.use(express.json());
 
-  // CORS: Swagger UI corre en otro origen (localhost:8080)
-  app.use((req, res, next) => {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'GET,POST,DELETE,OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type');
-    if (req.method === 'OPTIONS') return res.sendStatus(204);
-    next();
-  });
+  // Sin CORS a propósito: al backend solo lo llama el gateway, de servidor a servidor.
+  // El CORS para el navegador (front y Swagger UI) lo resuelve el gateway.
 
   app.get('/health', async (req, res) => {
     await verificarBase();
