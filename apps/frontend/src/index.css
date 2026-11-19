@@ -176,3 +176,31 @@ p[role='status'] { color: var(--ok); margin: 0; }
   color: var(--danger);
   font-weight: 600;
 }
+
+.sesion {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Compra de un producto */
+.productos li { flex-wrap: wrap; }
+.productos .compra {
+  flex-basis: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+.cantidad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cantidad button { padding: 2px 10px; }
+.cantidad span {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 600;
+}
+.agregado { color: var(--ok); font-size: 0.9rem; }

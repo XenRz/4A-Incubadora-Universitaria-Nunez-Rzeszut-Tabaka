@@ -1,10 +1,12 @@
-import { Routes, Route } from 'react-router-dom'
-import ListaTiendas from '../features/vitrina/ListaTiendas.jsx'
+import { Routes, Route, Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
+import ListaTiendas from '../features/vitrina/ListaTiendas.jsx'
+import VistaTienda from '../features/vitrina/VistaTienda.jsx'
+import TiendaEditable from '../features/vitrina/TiendaEditable.jsx'
 import { login } from '../features/autenticacion/login.js'
 import { logout } from '../features/autenticacion/logout.js'
 import { handleCallback } from '../features/autenticacion/callback.js'
-import VistaTienda from '../features/vitrina/VistaTienda.jsx'
+import { esDueno } from '../shared/utils/token.js'
 
 import './App.css'
 
@@ -26,17 +28,21 @@ function App() {
     <main>
       <header className="cabecera">
         <h1>Incubadora Universitaria 4A</h1>
-        {logueado
-          ? <button className="secundario" onClick={logout}>Cerrar sesión</button>
-          : <button onClick={login}>Iniciar sesión</button>}
+        <div className="sesion">
+          {logueado && esDueno() && <Link to="/mi-tienda">Editar mi tienda</Link>}
+          {logueado
+            ? <button className="secundario" onClick={logout}>Cerrar sesión</button>
+            : <button onClick={login}>Iniciar sesión</button>}
+        </div>
       </header>
 
       {error && <p role="alert">Error: {error}</p>}
 
-    <Routes>
+      <Routes>
         <Route path="/" element={<ListaTiendas />} />
         <Route path="/tiendas/:id" element={<VistaTienda />} />
-    </Routes>      
+        <Route path="/mi-tienda" element={<TiendaEditable />} />
+      </Routes>
     </main>
   )
 }
