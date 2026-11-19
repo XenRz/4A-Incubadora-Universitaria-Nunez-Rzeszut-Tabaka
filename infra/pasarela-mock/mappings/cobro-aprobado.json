@@ -1,0 +1,21 @@
+
+{
+  "priority": 10,
+  "request": {
+    "method": "POST",
+    "url": "/cobros",
+    "bodyPatterns": [
+      { "matchesJsonPath": "$.monto" }
+    ]
+  },
+  "response": {
+    "status": 201,
+    "headers": { "Content-Type": "application/json" },
+    "jsonBody": {
+      "id": "{{randomValue type='UUID'}}",
+      "referencia": "{{jsonPath request.body '$.referencia'}}",
+      "estado": "aprobado"
+    },
+    "transformers": ["response-template"]
+  }
+}

@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Incubadora Universitaria 4A - Tiendas online para emprendedores
+  version: 1.0.0
+  description: |
+    API de la incubadora universitaria 4A para tiendas online para emprendedores. 
+    Esta API permite gestionar tiendas y productos. 
+servers:
+  - url: http://localhost:8000/v1
+    description: Gateway (la API ya no publica su puerto; se entra por acá)
+security:
+  - keycloak: [openid]
+tags:
+  - name: Tiendas
+  - name: Productos
+paths:
+  /tiendas:
+    get:
+      tags: [Tiendas]
+      summary: Listar tiendas
+      operationId: listarTiendas
+      description: '**Rol requerido:** Cualquier rol'
+      security: []
+      responses:
+        '200':
+          description: Lista de tiendas. Si no hay tiendas, devuelve una lista vacía.
+          content:
+            application/json:
+              schema:
+                type: array #array de tiendas
+                items:
+                  $ref: '#/components/schemas/Tienda' # una tienda
+  /mi-tienda:
+    get:
+      tags: [Tiendas]
+      summary: Obtener la tienda del usuario autenticado
+      operationId: obtenerMiTienda
+      description: |
+        **Rol requerido:** dueno
+
+        Devuelve la tienda cuyo dueño es el usuario del token. Cada dueño tiene una sola tienda.
+      responses:
+        '200':
+          description: La tienda del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tienda'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          description: El usuario no tiene una tienda asignada.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: about:blank
+                title: Tienda no encontrada
+                status: 404
+                detail: No tenés una tienda asignada.
+                instance: /mi-tienda
+  /tiendas/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags: [Tiendas]
+      summary: Obtener una tienda
+      operationId: obtenerTienda
+      description: '**Rol requerido:** Cualquier rol'
+      security: []
+      responses:
+        '200':
+          description: Datos de la tienda solicitada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tienda'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+  /tiendas/{id}/productos:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+    get:
+      tags: [Productos]
+      summary: Listar productos de una tienda
+      operationId: listarProductos
+      description: '**Rol requerido:** Cualquier rol'
+      security: []
+      responses:
+        '200':
+          description: Lista de productos de la tienda. Si no hay productos, devuelve una lista vacía.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Producto'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    post:
+      tags: [Productos]
+      summary: Crear un producto en la tienda.
+      operationId: crearProducto
+      description: |
+        **Rol requerido:** dueno
+
+        El producto se crea en la tienda indicada en la URL. Solo puede hacerlo el dueño de esa tienda.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductoNuevo'
+            example:
+              nombre: Mate de madera
+              precio: 1500.50
+              stock: 10
+      responses:
+        '201':
+          description: Producto creado en la tienda
+          headers:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: |
+            El usuario no tiene el rol dueno (lo rechaza el gateway)
+            o no es el dueño de la tienda de la URL (lo rechaza el backend).
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              examples:
+                sinRol:
+                  summary: No tiene el rol dueno
+                  value:
+                    type: about:blank
+                    title: Sin permiso
+                    status: 403
+                    detail: 'comprador tiene los roles [comprador] y esta operación requiere uno de [dueno].'
+                    instance: /tiendas/1/productos
+                tiendaAjena:
+                  summary: Es dueño, pero de otra tienda
+                  value:
+                    type: about:blank
+                    title: Sin permiso
+                    status: 403
+                    detail: No sos el dueño de la tienda 2.
+                    instance: /tiendas/2/productos
+components:
+  securitySchemes:
+    keycloak:
+      type: oauth2
+      description: |
+        OAuth 2.0 / OpenID Connect con Keycloak. Flujo Authorization Code con PKCE (cliente público "swagger-ui").
+        Documento de descubrimiento OIDC: http://localhost:8180/realms/incubadora-universitaria/.well-known/openid-configuration
+      flows:
+        authorizationCode:
+          authorizationUrl: http://localhost:8180/realms/incubadora-universitaria/protocol/openid-connect/auth
+          tokenUrl: http://localhost:8180/realms/incubadora-universitaria/protocol/openid-connect/token
+          scopes:
+            openid: Identidad del usuario (OIDC)
+            profile: Nombre y usuario
+  schemas:
+    Tienda:
+      type: object
+      required: [id, nombre]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: Tienda de mates unahur
+    ProductoNuevo:
+      type: object
+      required: [nombre, precio, stock]
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          example: Mate de madera
+          nullable: false
+        precio:
+          type: number
+          format: float
+          minimum: 0
+          exclusiveMinimum: true # sirve para que el precio no pueda ser 0
+          example: 1500.50
+          nullable: false
+        stock:
+          type: integer
+          minimum: 0
+          example: 10
+          nullable: false
+    Producto:
+      allOf:
+        - $ref: '#/components/schemas/ProductoNuevo'
+        - type: object
+          required: [id, tiendaId,tiendaNombre]
+          properties:
+            id:
+              type: integer
+              example: 1
+            tiendaId:
+              type: integer
+              example: 1
+            tiendaNombre:
+              type: string
+              example: Tienda de mates unahur
+    ProblemDetails:
+      description: Formato de error estándar (RFC 9457, antes RFC 7807)
+      type: object
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          example: Tienda no encontrada
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: No existe una tienda con id 99.
+        instance:
+          type: string
+          example: /tiendas/99
+  responses:
+    NoEncontrado:
+      description: El recurso no existe
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Invalido:
+      description: Datos de entrada inválidos
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    NoAutenticado:
+      description: Falta el token, está vencido o su firma no es válida (no sé quién sos)
+      headers:
+        WWW-Authenticate:
+          schema:
+            type: string
+            example: Bearer realm="incubadora-universitaria"
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: about:blank
+            title: No autenticado
+            status: 401
+            detail: 'Falta el header "Authorization: Bearer <token>".'
+            instance: /tiendas
+    SinPermiso:
+        description: El token es válido pero el rol no alcanza para esta operación (sé quién sos, pero no podés)
+        content:
+          application/problem+json:
+            schema:
+              $ref: '#/components/schemas/ProblemDetails'
+            example:
+              type: about:blank
+              title: Sin permiso
+              status: 403
+              detail: 'beto tiene los roles [comprador] y esta operación requiere uno de [dueno].'
+              instance: /mi-tienda
